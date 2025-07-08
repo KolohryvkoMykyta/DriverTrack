@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DriverTrack.Application.DTOs
+{
+    public class DriverDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = default!;
+        public string PhoneNumber { get; set; } = default!;
+        public bool IsActive { get; set; }
+    }
+}

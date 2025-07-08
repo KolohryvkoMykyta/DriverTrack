@@ -10,4 +10,15 @@
     <ProjectReference Include="..\DriverTrack.Domain\DriverTrack.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\FuelEntries\" />
+    <Folder Include="Features\Vehicles\" />
+    <Folder Include="Features\Routes\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="15.0.0" />
+    <PackageReference Include="MediatR" Version="13.0.0" />
+  </ItemGroup>
+
 </Project>
