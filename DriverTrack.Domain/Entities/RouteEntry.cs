@@ -15,12 +15,15 @@ namespace DriverTrack.Domain.Entities
         public Guid VehicleId { get; set; }
         public Vehicle? Vehicle { get; set; }
 
+        public Guid RouteTypeId { get; set; }
+        public RouteType? RouteType { get; set; }
+
         public DateTime StartDate { get; set; }
         public double StartOdometer { get; set; }
 
         public DateTime? EndDate { get; set; }
         public double? EndOdometer { get; set; }
 
-        public decimal? Earnings { get; set; }
+        public decimal Earnings { get; set; }
     }
 }
