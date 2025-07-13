@@ -4,20 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DriverTrack.Domain.Entities
+namespace DriverTrack.Application.DTOs
 {
-    public class Vehicle
+    public class VehicleDto
     {
         public Guid Id { get; set; }
         public string Brand { get; set; } = default!;
         public string Model { get; set; } = default!;
         public string LicensePlate { get; set; } = default!;
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; }
 
         public Guid DriverId { get; set; }
-        public Driver? Driver { get; set; }
-
-        public ICollection<FuelEntry> FuelEntries { get; set; } = new List<FuelEntry>();
-        public ICollection<RouteEntry> RouteEntries { get; set; } = new List<RouteEntry>();
     }
 }
