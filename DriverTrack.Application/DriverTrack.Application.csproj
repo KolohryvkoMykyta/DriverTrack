@@ -13,7 +13,6 @@
   <ItemGroup>
     <Folder Include="Features\FuelEntries\" />
     <Folder Include="Features\Vehicles\" />
-    <Folder Include="Features\Routes\" />
   </ItemGroup>
 
   <ItemGroup>
