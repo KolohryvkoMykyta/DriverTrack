@@ -11,10 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\FuelEntries\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="15.0.0" />
     <PackageReference Include="MediatR" Version="13.0.0" />
   </ItemGroup>

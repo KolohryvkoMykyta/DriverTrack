@@ -12,6 +12,7 @@ namespace DriverTrack.Application.Mapping
             CreateMap<RouteEntry, RouteEntryDto>();
             CreateMap<Vehicle, VehicleDto>();
             CreateMap<RouteType, RouteTypeDto>();
+            CreateMap<FuelEntry, FuelEntryDto>();
         }
     }
 }
