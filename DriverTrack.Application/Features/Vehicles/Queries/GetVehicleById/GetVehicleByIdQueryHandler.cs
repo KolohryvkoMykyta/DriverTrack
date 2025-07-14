@@ -2,11 +2,6 @@
 using DriverTrack.Application.DTOs;
 using DriverTrack.Application.Interfaces;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DriverTrack.Application.Features.Vehicles.Queries.GetVehicleById
 {
@@ -24,6 +19,7 @@ namespace DriverTrack.Application.Features.Vehicles.Queries.GetVehicleById
         public async Task<VehicleDto?> Handle(GetVehicleByIdQuery request, CancellationToken cancellationToken)
         {
             var vehicle = await _vehicleRepository.GetByIdAsync(request.Id);
+
             return vehicle is null ? null : _mapper.Map<VehicleDto>(vehicle);
         }
     }

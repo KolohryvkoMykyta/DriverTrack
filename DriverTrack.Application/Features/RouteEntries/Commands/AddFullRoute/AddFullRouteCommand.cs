@@ -14,6 +14,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.AddFullRoute
         DateTime StartDate,
         double StartOdometer,
         DateTime EndDate,
-        double EndOdometer
+        double EndOdometer,
+        double? TotalDistance
     ) : IRequest<Guid>;
 }

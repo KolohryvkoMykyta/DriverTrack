@@ -41,6 +41,8 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.AddFullRoute
                 Earnings = routeType.Earnings
             };
 
+            route.TotalDistance = request.TotalDistance ?? (request.EndOdometer - request.StartOdometer);
+
             await _routeRepository.AddAsync(route);
 
             return route.Id;

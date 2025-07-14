@@ -33,6 +33,9 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
             route.EndOdometer = request.EndOdometer;
             route.EndDate = request.EndDate ?? DateTime.UtcNow;
 
+            if (route.EndOdometer is not null)
+                route.TotalDistance = route.EndOdometer - route.StartOdometer;
+
             await _routeRepository.UpdateAsync(route);
 
             return Unit.Value;

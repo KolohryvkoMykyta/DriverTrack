@@ -40,6 +40,9 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
             route.EndDate = request.EndDate;
             route.EndOdometer = request.EndOdometer;
 
+            if (request.TotalDistance is not null)
+                route.TotalDistance = request.TotalDistance;
+
             route.Earnings = request.Earnings ?? routeType.Earnings;
 
             await _routeRepository.UpdateAsync(route);

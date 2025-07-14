@@ -13,6 +13,8 @@
         public DateTime? EndDate { get; set; }
         public double? EndOdometer { get; set; }
 
+        public double? TotalDistance { get; set; }
+
         public decimal Earnings { get; set; }
     }
 }

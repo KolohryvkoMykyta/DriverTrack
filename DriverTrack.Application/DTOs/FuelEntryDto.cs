@@ -15,5 +15,6 @@ namespace DriverTrack.Application.DTOs
         public DateTime Date { get; set; }
         public double OdometerReading { get; set; }
         public double Liters { get; set; }
+        public double? FuelConsumption { get; set; }
     }
 }

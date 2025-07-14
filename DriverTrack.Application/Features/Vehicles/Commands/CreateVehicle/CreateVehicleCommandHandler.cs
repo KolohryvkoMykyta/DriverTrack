@@ -31,6 +31,7 @@ namespace DriverTrack.Application.Features.Vehicles.Commands.CreateVehicle
             };
 
             await _vehicleRepository.AddAsync(vehicle);
+
             return vehicle.Id;
         }
     }

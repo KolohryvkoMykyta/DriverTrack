@@ -10,5 +10,6 @@ namespace DriverTrack.Application.Interfaces
         Task AddAsync(FuelEntry fuelEntry);
         Task UpdateAsync(FuelEntry fuelEntry);
         Task DeleteAsync(Guid id);
+        Task<FuelEntry?> GetPreviousFuelEntryAsync(Guid vehicleId, double currentOdometer);
     }
 }

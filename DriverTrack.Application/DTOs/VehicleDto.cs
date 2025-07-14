@@ -15,5 +15,7 @@ namespace DriverTrack.Application.DTOs
         public bool IsActive { get; set; }
 
         public Guid DriverId { get; set; }
+
+        public double? AverageFuelConsumption { get; set; }
     }
 }
