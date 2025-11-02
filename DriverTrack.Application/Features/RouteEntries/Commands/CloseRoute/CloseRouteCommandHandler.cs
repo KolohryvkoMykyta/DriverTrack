@@ -1,5 +1,6 @@
 ﻿using DriverTrack.Application.Common.Constants;
 using DriverTrack.Application.Common.Exceptions;
+using DriverTrack.Application.Common.Interfaces;
 using DriverTrack.Application.Interfaces;
 using DriverTrack.Domain.Entities;
 using MediatR;
@@ -14,10 +15,14 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
     public class CloseRouteCommandHandler : IRequestHandler<CloseRouteCommand, Unit>
     {
         private readonly IRouteRepository _routeRepository;
+        private readonly IVehicleRepository _vehicleRepository;
+        private readonly IConsumptionCalculator _consumptionCalculator;
 
-        public CloseRouteCommandHandler(IRouteRepository repository)
+        public CloseRouteCommandHandler(IRouteRepository repository, IVehicleRepository vehicleRepository, IConsumptionCalculator consumptionCalculator)
         {
             _routeRepository = repository;
+            _vehicleRepository = vehicleRepository;
+            _consumptionCalculator = consumptionCalculator;
         }
 
         public async Task<Unit> Handle(CloseRouteCommand request, CancellationToken cancellationToken)
@@ -35,6 +40,16 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
 
             if (route.EndOdometer is not null)
                 route.TotalDistance = route.EndOdometer - route.StartOdometer;
+
+            if (route.TotalDistance is not null)
+            {
+                var vehicle = await _vehicleRepository.GetByIdAsync(route.VehicleId);
+                
+                if (vehicle is null)
+                    throw new NotFoundException(nameof(Vehicle), route.VehicleId);
+
+                route.FuelUsed = _consumptionCalculator.CalculateFuelUsed(vehicle.AverageFuelConsumption, route.TotalDistance.Value);
+            }
 
             await _routeRepository.UpdateAsync(route);
 

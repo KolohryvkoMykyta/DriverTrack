@@ -16,8 +16,12 @@ namespace DriverTrack.Domain.Entities
         public Vehicle? Vehicle { get; set; }
 
         public DateTime Date { get; set; }
-        public double Liters { get; set; }
         public double OdometerReading { get; set; }
+        public double Liters { get; set; }
+
+        public bool IsFullTank { get; set; }
+
+        public double? DistanceSinceLastRefuel { get; set; }
         public double? FuelConsumption { get; set; }
     }
 }

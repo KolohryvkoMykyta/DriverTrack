@@ -1,4 +1,5 @@
 ﻿using DriverTrack.Application.Common.Exceptions;
+using DriverTrack.Application.Common.Interfaces;
 using DriverTrack.Application.Interfaces;
 using DriverTrack.Domain.Entities;
 using MediatR;
@@ -13,12 +14,18 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
     public class UpdateRouteCommandHandler : IRequestHandler<UpdateRouteCommand, Unit>
     {
         private readonly IRouteRepository _routeRepository;
-        private readonly IRouteTypeRepository _routeTypeRepository;
+        private readonly IVehicleRepository _vehicleRepository;
+        private readonly IConsumptionCalculator _consumptionCalculator;
 
-        public UpdateRouteCommandHandler(IRouteRepository routeRepository, IRouteTypeRepository routeTypeRepository)
+        public UpdateRouteCommandHandler(
+            IRouteRepository routeRepository, 
+            IRouteTypeRepository routeTypeRepository, 
+            IConsumptionCalculator consumptionCalculator,
+            IVehicleRepository vehicleRepository)
         {
             _routeRepository = routeRepository;
-            _routeTypeRepository = routeTypeRepository;
+            _consumptionCalculator = consumptionCalculator;
+            _vehicleRepository = vehicleRepository;
         }
 
         public async Task<Unit> Handle(UpdateRouteCommand request, CancellationToken cancellationToken)
@@ -27,11 +34,6 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
 
             if (route is null)
                 throw new NotFoundException(nameof(RouteEntry), request.Id);
-
-            var routeType = await _routeTypeRepository.GetByIdAsync(request.RouteTypeId);
-
-            if (routeType is null)
-                throw new NotFoundException(nameof(RouteType), request.RouteTypeId);
 
             route.VehicleId = request.VehicleId;
             route.RouteTypeId = request.RouteTypeId;
@@ -42,8 +44,20 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
 
             if (request.TotalDistance is not null)
                 route.TotalDistance = request.TotalDistance;
+            else if (request.EndOdometer is not null)
+                route.TotalDistance = request.EndOdometer - route.StartOdometer;
 
-            route.Earnings = request.Earnings ?? routeType.Earnings;
+            route.Earnings = request.Earnings ?? route.Earnings;
+
+            if (route.TotalDistance is not null)
+            {
+                var vehicle = await _vehicleRepository.GetByIdAsync(route.VehicleId);
+
+                if (vehicle is null)
+                    throw new NotFoundException(nameof(Vehicle), route.VehicleId);
+
+                route.FuelUsed = _consumptionCalculator.CalculateFuelUsed(vehicle.AverageFuelConsumption, route.TotalDistance.Value);
+            }
 
             await _routeRepository.UpdateAsync(route);
 
