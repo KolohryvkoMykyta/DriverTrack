@@ -8,7 +8,7 @@ namespace DriverTrack.Infrastructure.DependencyInjection
     {
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
         {
-            services.AddScoped<IConsumptionCalculator, ConsumptionCalculator>();
+            //services.AddScoped<IFuelConsumptionCalculator, ConsumptionCalculator>();
 
             return services;
         }

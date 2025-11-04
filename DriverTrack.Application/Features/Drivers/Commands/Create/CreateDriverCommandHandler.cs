@@ -11,11 +11,11 @@ namespace DriverTrack.Application.Features.Drivers.Commands.Create
 {
     public class CreateDriverCommandHandler : IRequestHandler<CreateDriverCommand, Guid>
     {
-        private readonly IDriverRepository _repository;
+        private readonly IDriverRepository _driverRepository;
 
         public CreateDriverCommandHandler(IDriverRepository repository)
         {
-            _repository = repository;
+            _driverRepository = repository;
         }
 
         public async Task<Guid> Handle(CreateDriverCommand request, CancellationToken cancellationToken)
@@ -28,7 +28,7 @@ namespace DriverTrack.Application.Features.Drivers.Commands.Create
                 IsActive = true
             };
 
-            await _repository.AddAsync(driver);
+            await _driverRepository.AddAsync(driver);
             
             return driver.Id;
         }

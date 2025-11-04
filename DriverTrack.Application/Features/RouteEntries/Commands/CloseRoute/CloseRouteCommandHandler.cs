@@ -16,13 +16,11 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
     {
         private readonly IRouteRepository _routeRepository;
         private readonly IVehicleRepository _vehicleRepository;
-        private readonly IConsumptionCalculator _consumptionCalculator;
 
-        public CloseRouteCommandHandler(IRouteRepository repository, IVehicleRepository vehicleRepository, IConsumptionCalculator consumptionCalculator)
+        public CloseRouteCommandHandler(IRouteRepository repository, IVehicleRepository vehicleRepository)
         {
             _routeRepository = repository;
             _vehicleRepository = vehicleRepository;
-            _consumptionCalculator = consumptionCalculator;
         }
 
         public async Task<Unit> Handle(CloseRouteCommand request, CancellationToken cancellationToken)
@@ -44,11 +42,19 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
             if (route.TotalDistance is not null)
             {
                 var vehicle = await _vehicleRepository.GetByIdAsync(route.VehicleId);
-                
                 if (vehicle is null)
                     throw new NotFoundException(nameof(Vehicle), route.VehicleId);
 
-                route.FuelUsed = _consumptionCalculator.CalculateFuelUsed(vehicle.AverageFuelConsumption, route.TotalDistance.Value);
+                if (vehicle.AverageFuelConsumption is not null && route.TotalDistance!.Value > 0)
+                {
+                    route.FuelUsed = Math.Round(
+                        route.TotalDistance!.Value * vehicle.AverageFuelConsumption!.Value / 100.0,
+                        2);
+                }
+                else
+                {
+                    route.FuelUsed = null;
+                }
             }
 
             await _routeRepository.UpdateAsync(route);

@@ -1,4 +1,5 @@
-﻿using DriverTrack.Application.Interfaces;
+﻿using DriverTrack.Application.Common.Interfaces;
+using DriverTrack.Application.Interfaces;
 using DriverTrack.Domain.Entities;
 using MediatR;
 
@@ -8,20 +9,19 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
     {
         private readonly IFuelEntryRepository _fuelEntryRepository;
         private readonly IVehicleRepository _vehicleRepository;
+        private readonly IFuelConsumptionCalculator _consumptionCalculator;
+        private readonly IVehicleAverageConsumptionCalculator _vehicleAverageConsumptionCalculator;
 
-        public CreateFuelEntryCommandHandler(IFuelEntryRepository fuelEntryRepository, IVehicleRepository vehicleRepository)
+        public CreateFuelEntryCommandHandler(IFuelEntryRepository fuelEntryRepository, IVehicleRepository vehicleRepository, IFuelConsumptionCalculator consumptionCalculator, IVehicleAverageConsumptionCalculator vehicleAverageConsumptionCalculator)
         {
             _fuelEntryRepository = fuelEntryRepository;
             _vehicleRepository = vehicleRepository;
+            _consumptionCalculator = consumptionCalculator;
+            _vehicleAverageConsumptionCalculator = vehicleAverageConsumptionCalculator;
         }
 
         public async Task<Guid> Handle(CreateFuelEntryCommand request, CancellationToken cancellationToken)
         {
-            var consumption = await CalculateFuelConsumptionAsync(
-                request.VehicleId,
-                request.OdometerReading,
-                request.Liters
-            );
 
             var entry = new FuelEntry
             {
@@ -30,56 +30,37 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
                 VehicleId = request.VehicleId,
                 Date = request.Date,
                 OdometerReading = request.OdometerReading,
-                Liters = request.Liters,
-                FuelConsumption = consumption
+                Liters = request.Liters
             };
 
-            await _fuelEntryRepository.AddAsync(entry);
-            
-            await UpdateAverageFuelConsumptionAsync(request.VehicleId);
-
-            return entry.Id;
-        }
-
-        private async Task<double?> CalculateFuelConsumptionAsync(Guid vehicleId, double currentOdometer, double liters)
-        {
-            var previous = await _fuelEntryRepository.GetPreviousFuelEntryAsync(vehicleId, currentOdometer);
-
-            if (previous is not null)
+            if (request.IsFullTank)
             {
-                var distance = currentOdometer - previous.OdometerReading;
+                var (Distance, Consumption) = await _consumptionCalculator.CalculateAsync(
+                    request.VehicleId,
+                    request.OdometerReading,
+                    request.Liters,
+                    cancellationToken
+                );
 
-                if (distance > 0)
+                entry.DistanceSinceLastRefuel = Distance;
+                entry.FuelConsumption = Consumption;
+            }
+
+            await _fuelEntryRepository.AddAsync(entry);
+
+            if (request.IsFullTank)
+            {
+                var vehicle = await _vehicleRepository.GetByIdAsync(request.VehicleId);
+                
+                if (vehicle != null)
                 {
-                    return (liters / distance) * 100;
+                    vehicle.AverageFuelConsumption = await _vehicleAverageConsumptionCalculator.CalculateAsync(request.VehicleId, cancellationToken);
+                    
+                    await _vehicleRepository.UpdateAsync(vehicle);
                 }
             }
 
-            return null;
-        }
-
-        private async Task UpdateAverageFuelConsumptionAsync(Guid vehicleId)
-        {
-            var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId);
-
-            if (vehicle is null)
-                return;
-
-            var entries = await _fuelEntryRepository.GetByVehicleIdAsync(vehicleId);
-            
-            var validConsumptions = entries
-                .Where(e => e.FuelConsumption.HasValue)
-                .Select(e => e.FuelConsumption!.Value)
-                .ToList();
-
-            if (validConsumptions.Any())
-            {
-                var average = validConsumptions.Average();
-
-                vehicle.AverageFuelConsumption = average;
-
-                await _vehicleRepository.UpdateAsync(vehicle);
-            }
+            return entry.Id;
         }
     }
 }

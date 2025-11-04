@@ -7,16 +7,16 @@ namespace DriverTrack.Application.Features.Drivers.Commands.Update;
 
 public class UpdateDriverCommandHandler : IRequestHandler<UpdateDriverCommand, Unit>
 {
-    private readonly IDriverRepository _repository;
+    private readonly IDriverRepository _driverRepository;
 
     public UpdateDriverCommandHandler(IDriverRepository repository)
     {
-        _repository = repository;
+        _driverRepository = repository;
     }
 
     public async Task<Unit> Handle(UpdateDriverCommand request, CancellationToken cancellationToken)
     {
-        var driver = await _repository.GetByIdAsync(request.Id);
+        var driver = await _driverRepository.GetByIdAsync(request.Id);
         
         if (driver == null)
             throw new NotFoundException(nameof(Driver), request.Id);
@@ -25,7 +25,7 @@ public class UpdateDriverCommandHandler : IRequestHandler<UpdateDriverCommand, U
         driver.PhoneNumber = request.PhoneNumber;
         driver.IsActive = request.IsActive;
 
-        await _repository.UpdateAsync(driver);
+        await _driverRepository.UpdateAsync(driver);
 
         return Unit.Value;
     }

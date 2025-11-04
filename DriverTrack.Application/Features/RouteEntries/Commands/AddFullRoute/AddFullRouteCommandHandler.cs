@@ -16,18 +16,15 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.AddFullRoute
         private readonly IRouteRepository _routeRepository;
         private readonly IRouteTypeRepository _routeTypeRepository;
         private readonly IVehicleRepository _vehicleRepository;
-        private readonly IConsumptionCalculator _consumptionCalculator;
 
         public AddFullRouteCommandHandler(
             IRouteRepository routeRepository, 
             IRouteTypeRepository routeTypeRepository, 
-            IVehicleRepository vehicleRepository, 
-            IConsumptionCalculator consumptionCalculator)
+            IVehicleRepository vehicleRepository)
         {
             _routeRepository = routeRepository;
             _routeTypeRepository = routeTypeRepository;
             _vehicleRepository = vehicleRepository;
-            _consumptionCalculator = consumptionCalculator;
         }
 
         public async Task<Guid> Handle(AddFullRouteCommand request, CancellationToken cancellationToken)
@@ -44,7 +41,10 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.AddFullRoute
 
             var totalDistance = request.TotalDistance ?? (request.EndOdometer - request.StartOdometer);
 
-            var fuelUsed = _consumptionCalculator.CalculateFuelUsed(vehicle.AverageFuelConsumption, totalDistance);
+            double? fuelUsed = null;
+
+            if (vehicle.AverageFuelConsumption is not null && totalDistance > 0)
+                fuelUsed = Math.Round(vehicle.AverageFuelConsumption.Value * totalDistance / 100.0, 2);
 
             var route = new RouteEntry
             {

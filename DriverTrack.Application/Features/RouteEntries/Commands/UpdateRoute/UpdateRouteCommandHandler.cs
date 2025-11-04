@@ -15,16 +15,13 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
     {
         private readonly IRouteRepository _routeRepository;
         private readonly IVehicleRepository _vehicleRepository;
-        private readonly IConsumptionCalculator _consumptionCalculator;
 
         public UpdateRouteCommandHandler(
             IRouteRepository routeRepository, 
-            IRouteTypeRepository routeTypeRepository, 
-            IConsumptionCalculator consumptionCalculator,
+            IRouteTypeRepository routeTypeRepository,
             IVehicleRepository vehicleRepository)
         {
             _routeRepository = routeRepository;
-            _consumptionCalculator = consumptionCalculator;
             _vehicleRepository = vehicleRepository;
         }
 
@@ -56,7 +53,9 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
                 if (vehicle is null)
                     throw new NotFoundException(nameof(Vehicle), route.VehicleId);
 
-                route.FuelUsed = _consumptionCalculator.CalculateFuelUsed(vehicle.AverageFuelConsumption, route.TotalDistance.Value);
+                route.FuelUsed = (vehicle.AverageFuelConsumption is not null && route.TotalDistance!.Value > 0)
+                        ? Math.Round(vehicle.AverageFuelConsumption.Value * route.TotalDistance.Value / 100.0, 2)
+                        : null;
             }
 
             await _routeRepository.UpdateAsync(route);

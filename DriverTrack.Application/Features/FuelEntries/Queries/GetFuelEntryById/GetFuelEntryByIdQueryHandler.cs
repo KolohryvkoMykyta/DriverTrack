@@ -7,10 +7,10 @@ namespace DriverTrack.Application.Features.FuelEntries.Queries.GetFuelEntryById
 {
     public class GetFuelEntryByIdQueryHandler : IRequestHandler<GetFuelEntryByIdQuery, FuelEntryDto?>
     {
-        private readonly IFuelEntryRepository _repository;
+        private readonly IVehicleRepository _repository;
         private readonly IMapper _mapper;
 
-        public GetFuelEntryByIdQueryHandler(IFuelEntryRepository repository, IMapper mapper)
+        public GetFuelEntryByIdQueryHandler(IVehicleRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
