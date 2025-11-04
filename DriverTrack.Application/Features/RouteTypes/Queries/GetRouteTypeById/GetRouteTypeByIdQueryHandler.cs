@@ -18,7 +18,7 @@ namespace DriverTrack.Application.Features.RouteTypes.Queries.GetRouteTypeById
 
         public async Task<RouteTypeDto?> Handle(GetRouteTypeByIdQuery request, CancellationToken cancellationToken)
         {
-            var routeType = await _routeTypeRepository.GetByIdAsync(request.Id);
+            var routeType = await _routeTypeRepository.GetByIdAsync(request.Id, cancellationToken);
 
             return routeType is null
                 ? null

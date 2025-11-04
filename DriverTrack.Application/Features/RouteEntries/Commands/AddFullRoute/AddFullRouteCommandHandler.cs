@@ -16,25 +16,28 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.AddFullRoute
         private readonly IRouteRepository _routeRepository;
         private readonly IRouteTypeRepository _routeTypeRepository;
         private readonly IVehicleRepository _vehicleRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public AddFullRouteCommandHandler(
             IRouteRepository routeRepository, 
             IRouteTypeRepository routeTypeRepository, 
-            IVehicleRepository vehicleRepository)
+            IVehicleRepository vehicleRepository,
+            IUnitOfWork unitOfWork)
         {
             _routeRepository = routeRepository;
             _routeTypeRepository = routeTypeRepository;
             _vehicleRepository = vehicleRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Guid> Handle(AddFullRouteCommand request, CancellationToken cancellationToken)
         {
-            var routeType = await _routeTypeRepository.GetByIdAsync(request.RouteTypeId);
+            var routeType = await _routeTypeRepository.GetByIdAsync(request.RouteTypeId, cancellationToken);
 
             if (routeType is null)
                 throw new NotFoundException(nameof(RouteType), request.RouteTypeId);
 
-            var vehicle = await _vehicleRepository.GetByIdAsync(request.VehicleId);
+            var vehicle = await _vehicleRepository.GetByIdAsync(request.VehicleId, cancellationToken);
             
             if (vehicle is null)
                 throw new NotFoundException(nameof(Vehicle), request.VehicleId);
@@ -61,7 +64,8 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.AddFullRoute
                 FuelUsed = fuelUsed
             };
 
-            await _routeRepository.AddAsync(route);
+            await _routeRepository.AddAsync(route, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return route.Id;
         }

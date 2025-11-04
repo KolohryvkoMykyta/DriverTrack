@@ -11,13 +11,20 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IFuelConsumptionCalculator _consumptionCalculator;
         private readonly IVehicleAverageConsumptionCalculator _vehicleAverageConsumptionCalculator;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CreateFuelEntryCommandHandler(IFuelEntryRepository fuelEntryRepository, IVehicleRepository vehicleRepository, IFuelConsumptionCalculator consumptionCalculator, IVehicleAverageConsumptionCalculator vehicleAverageConsumptionCalculator)
+        public CreateFuelEntryCommandHandler(
+            IFuelEntryRepository fuelEntryRepository, 
+            IVehicleRepository vehicleRepository, 
+            IFuelConsumptionCalculator consumptionCalculator, 
+            IVehicleAverageConsumptionCalculator vehicleAverageConsumptionCalculator,
+            IUnitOfWork unitOfWork)
         {
             _fuelEntryRepository = fuelEntryRepository;
             _vehicleRepository = vehicleRepository;
             _consumptionCalculator = consumptionCalculator;
             _vehicleAverageConsumptionCalculator = vehicleAverageConsumptionCalculator;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Guid> Handle(CreateFuelEntryCommand request, CancellationToken cancellationToken)
@@ -46,19 +53,21 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
                 entry.FuelConsumption = Consumption;
             }
 
-            await _fuelEntryRepository.AddAsync(entry);
+            await _fuelEntryRepository.AddAsync(entry, cancellationToken);
 
             if (request.IsFullTank)
             {
-                var vehicle = await _vehicleRepository.GetByIdAsync(request.VehicleId);
+                var vehicle = await _vehicleRepository.GetByIdAsync(request.VehicleId, cancellationToken);
                 
                 if (vehicle != null)
                 {
                     vehicle.AverageFuelConsumption = await _vehicleAverageConsumptionCalculator.CalculateAsync(request.VehicleId, cancellationToken);
                     
-                    await _vehicleRepository.UpdateAsync(vehicle);
+                    _vehicleRepository.Update(vehicle);
                 }
             }
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return entry.Id;
         }

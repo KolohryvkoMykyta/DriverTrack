@@ -2,11 +2,6 @@
 using DriverTrack.Application.DTOs;
 using DriverTrack.Application.Interfaces;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DriverTrack.Application.Features.Drivers.Queries
 {
@@ -23,7 +18,7 @@ namespace DriverTrack.Application.Features.Drivers.Queries
 
         public async Task<DriverDto?> Handle(GetDriverByIdQuery request, CancellationToken cancellationToken)
         {
-            var driver = await _repository.GetByIdAsync(request.Id);
+            var driver = await _repository.GetByIdAsync(request.Id, cancellationToken);
             return driver == null ? null : _mapper.Map<DriverDto>(driver);
         }
     }

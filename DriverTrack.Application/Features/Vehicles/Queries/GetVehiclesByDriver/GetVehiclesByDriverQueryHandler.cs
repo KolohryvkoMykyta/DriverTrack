@@ -18,7 +18,7 @@ namespace DriverTrack.Application.Features.Vehicles.Queries.GetVehiclesByDriver
 
         public async Task<List<VehicleDto>> Handle(GetVehiclesByDriverQuery request, CancellationToken cancellationToken)
         {
-            var vehicles = await _vehicleRepository.GetByDriverIdAsync(request.DriverId);
+            var vehicles = await _vehicleRepository.GetByDriverIdAsync(request.DriverId, cancellationToken);
 
             return _mapper.Map<List<VehicleDto>>(vehicles);
         }

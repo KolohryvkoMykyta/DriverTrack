@@ -12,10 +12,12 @@ namespace DriverTrack.Application.Features.RouteTypes.Commands.CreateRouteType
     public class CreateRouteTypeCommandHandler : IRequestHandler<CreateRouteTypeCommand, Guid>
     {
         private readonly IRouteTypeRepository _routeTypeRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CreateRouteTypeCommandHandler(IRouteTypeRepository routeTypeRepository)
+        public CreateRouteTypeCommandHandler(IRouteTypeRepository routeTypeRepository, IUnitOfWork unitOfWork)
         {
             _routeTypeRepository = routeTypeRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Guid> Handle(CreateRouteTypeCommand request, CancellationToken cancellationToken)
@@ -27,7 +29,8 @@ namespace DriverTrack.Application.Features.RouteTypes.Commands.CreateRouteType
                 Earnings = request.Earnings
             };
 
-            await _routeTypeRepository.AddAsync(routeType);
+            await _routeTypeRepository.AddAsync(routeType, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return routeType.Id;
         }

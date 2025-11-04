@@ -23,7 +23,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Queries.GetOpenRouteByDr
 
         public async Task<RouteEntryDto?> Handle(GetOpenRouteByDriverQuery request, CancellationToken cancellationToken)
         {
-            var openRoute = await _repository.GetOpenRouteAsync(request.DriverId);
+            var openRoute = await _repository.GetOpenRouteAsync(request.DriverId, cancellationToken);
 
             if (openRoute is null)
                 return null;

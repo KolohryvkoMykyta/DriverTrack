@@ -23,7 +23,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Queries.GetRoutesByDrive
 
         public async Task<List<RouteEntryDto>> Handle(GetRoutesByDriverQuery request, CancellationToken cancellationToken)
         {
-            var routes = await _repository.GetByDriverIdWithDateFilterAsync(request.DriverId, request.From, request.To);
+            var routes = await _repository.GetByDriverIdWithDateFilterAsync(request.DriverId, request.From, request.To, cancellationToken);
             return _mapper.Map<List<RouteEntryDto>>(routes);
         }
     }

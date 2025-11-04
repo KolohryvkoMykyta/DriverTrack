@@ -18,7 +18,7 @@ namespace DriverTrack.Application.Features.FuelEntries.Queries.GetFuelByVehicleI
 
         public async Task<List<FuelEntryDto>> Handle(GetFuelByVehicleIdQuery request, CancellationToken cancellationToken)
         {
-            var entries = await _fuelEntryRepository.GetByVehicleIdAsync(request.VehicleId, request.From, request.To);
+            var entries = await _fuelEntryRepository.GetByVehicleIdAsync(request.VehicleId, request.From, request.To, cancellationToken);
 
             return _mapper.Map<List<FuelEntryDto>>(entries);
         }

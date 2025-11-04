@@ -12,10 +12,12 @@ namespace DriverTrack.Application.Features.Vehicles.Commands.CreateVehicle
     public class CreateVehicleCommandHandler : IRequestHandler<CreateVehicleCommand, Guid>
     {
         private readonly IVehicleRepository _vehicleRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CreateVehicleCommandHandler(IVehicleRepository vehicleRepository)
+        public CreateVehicleCommandHandler(IVehicleRepository vehicleRepository, IUnitOfWork unitOfWork)
         {
             _vehicleRepository = vehicleRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Guid> Handle(CreateVehicleCommand request, CancellationToken cancellationToken)
@@ -30,7 +32,8 @@ namespace DriverTrack.Application.Features.Vehicles.Commands.CreateVehicle
                 IsActive = true
             };
 
-            await _vehicleRepository.AddAsync(vehicle);
+            await _vehicleRepository.AddAsync(vehicle, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return vehicle.Id;
         }

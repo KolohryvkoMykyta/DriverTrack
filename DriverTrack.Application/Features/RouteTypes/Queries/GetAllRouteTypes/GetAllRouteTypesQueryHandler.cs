@@ -23,7 +23,7 @@ namespace DriverTrack.Application.Features.RouteTypes.Queries.GetAllRouteTypes
 
         public async Task<List<RouteTypeDto>> Handle(GetAllRouteTypesQuery request, CancellationToken cancellationToken)
         {
-            var routeTypes = await _routeTypeRepository.GetAllAsync();
+            var routeTypes = await _routeTypeRepository.GetAllAsync(cancellationToken);
 
             return _mapper.Map<List<RouteTypeDto>>(routeTypes);
         }

@@ -23,7 +23,7 @@ namespace DriverTrack.Application.Features.Vehicles.Queries.GetAllVehicles
 
         public async Task<List<VehicleDto>> Handle(GetAllVehiclesQuery request, CancellationToken cancellationToken)
         {
-            var vehicles = await _vehicleRepository.GetAllAsync();
+            var vehicles = await _vehicleRepository.GetAllAsync(cancellationToken);
 
             return _mapper.Map<List<VehicleDto>>(vehicles);
         }

@@ -18,7 +18,7 @@ namespace DriverTrack.Application.Features.Drivers.Queries
 
         public async Task<List<DriverDto>> Handle(GetAllDriversQuery request, CancellationToken cancellationToken)
         {
-            var drivers = await _repository.GetAllAsync();
+            var drivers = await _repository.GetAllAsync(cancellationToken);
             return _mapper.Map<List<DriverDto>>(drivers);
         }
     }

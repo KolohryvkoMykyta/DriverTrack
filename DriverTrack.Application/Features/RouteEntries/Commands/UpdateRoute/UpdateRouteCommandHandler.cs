@@ -1,13 +1,7 @@
 ﻿using DriverTrack.Application.Common.Exceptions;
-using DriverTrack.Application.Common.Interfaces;
 using DriverTrack.Application.Interfaces;
 using DriverTrack.Domain.Entities;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
 {
@@ -15,19 +9,21 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
     {
         private readonly IRouteRepository _routeRepository;
         private readonly IVehicleRepository _vehicleRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public UpdateRouteCommandHandler(
-            IRouteRepository routeRepository, 
-            IRouteTypeRepository routeTypeRepository,
-            IVehicleRepository vehicleRepository)
+            IRouteRepository routeRepository,
+            IVehicleRepository vehicleRepository,
+            IUnitOfWork unitOfWork)
         {
             _routeRepository = routeRepository;
             _vehicleRepository = vehicleRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Unit> Handle(UpdateRouteCommand request, CancellationToken cancellationToken)
         {
-            var route = await _routeRepository.GetByIdAsync(request.Id);
+            var route = await _routeRepository.GetByIdAsync(request.Id, cancellationToken);
 
             if (route is null)
                 throw new NotFoundException(nameof(RouteEntry), request.Id);
@@ -48,7 +44,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
 
             if (route.TotalDistance is not null)
             {
-                var vehicle = await _vehicleRepository.GetByIdAsync(route.VehicleId);
+                var vehicle = await _vehicleRepository.GetByIdAsync(route.VehicleId, cancellationToken);
 
                 if (vehicle is null)
                     throw new NotFoundException(nameof(Vehicle), route.VehicleId);
@@ -58,7 +54,8 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
                         : null;
             }
 
-            await _routeRepository.UpdateAsync(route);
+            _routeRepository.Update(route);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Unit.Value;
         }

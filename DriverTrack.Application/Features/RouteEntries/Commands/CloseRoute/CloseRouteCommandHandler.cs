@@ -1,14 +1,8 @@
 ﻿using DriverTrack.Application.Common.Constants;
 using DriverTrack.Application.Common.Exceptions;
-using DriverTrack.Application.Common.Interfaces;
 using DriverTrack.Application.Interfaces;
 using DriverTrack.Domain.Entities;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
 {
@@ -16,16 +10,18 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
     {
         private readonly IRouteRepository _routeRepository;
         private readonly IVehicleRepository _vehicleRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CloseRouteCommandHandler(IRouteRepository repository, IVehicleRepository vehicleRepository)
+        public CloseRouteCommandHandler(IRouteRepository repository, IVehicleRepository vehicleRepository, IUnitOfWork unitOfWork)
         {
             _routeRepository = repository;
             _vehicleRepository = vehicleRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Unit> Handle(CloseRouteCommand request, CancellationToken cancellationToken)
         {
-            var route = await _routeRepository.GetByIdAsync(request.RouteId);
+            var route = await _routeRepository.GetByIdAsync(request.RouteId, cancellationToken);
 
             if (route is null)
                 throw new NotFoundException(nameof(RouteEntry), request.RouteId);
@@ -41,7 +37,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
 
             if (route.TotalDistance is not null)
             {
-                var vehicle = await _vehicleRepository.GetByIdAsync(route.VehicleId);
+                var vehicle = await _vehicleRepository.GetByIdAsync(route.VehicleId, cancellationToken);
                 if (vehicle is null)
                     throw new NotFoundException(nameof(Vehicle), route.VehicleId);
 
@@ -57,7 +53,8 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
                 }
             }
 
-            await _routeRepository.UpdateAsync(route);
+            _routeRepository.Update(route);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Unit.Value;
         }

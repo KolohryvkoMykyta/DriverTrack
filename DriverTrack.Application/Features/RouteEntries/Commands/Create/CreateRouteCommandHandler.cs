@@ -10,23 +10,26 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.Create
     {
         private readonly IRouteRepository _routeRepository;
         private readonly IRouteTypeRepository _routeTypeRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public CreateRouteCommandHandler(
             IRouteRepository routeRepository,
-            IRouteTypeRepository routeTypeRepository)
+            IRouteTypeRepository routeTypeRepository,
+            IUnitOfWork unitOfWork)
         {
             _routeRepository = routeRepository;
             _routeTypeRepository = routeTypeRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Guid> Handle(CreateRouteCommand request, CancellationToken cancellationToken)
         {
-            var openRoute = await _routeRepository.GetOpenRouteAsync(request.DriverId);
+            var openRoute = await _routeRepository.GetOpenRouteAsync(request.DriverId, cancellationToken);
 
             if (openRoute is not null)
                 throw new BusinessException(ErrorMessages.OpenRouteExists);
 
-            var routeType = await _routeTypeRepository.GetByIdAsync(request.RouteTypeId);
+            var routeType = await _routeTypeRepository.GetByIdAsync(request.RouteTypeId, cancellationToken);
             
             if (routeType == null)
                 throw new NotFoundException(nameof(RouteType), request.RouteTypeId);
@@ -42,8 +45,9 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.Create
                 Earnings = routeType.Earnings
             };
 
-            await _routeRepository.AddAsync(route);
-            
+            await _routeRepository.AddAsync(route, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
             return route.Id;
         }
     }

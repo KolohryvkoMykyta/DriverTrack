@@ -18,7 +18,7 @@ namespace DriverTrack.Application.Features.Vehicles.Queries.GetVehicleById
 
         public async Task<VehicleDto?> Handle(GetVehicleByIdQuery request, CancellationToken cancellationToken)
         {
-            var vehicle = await _vehicleRepository.GetByIdAsync(request.Id);
+            var vehicle = await _vehicleRepository.GetByIdAsync(request.Id, cancellationToken);
 
             return vehicle is null ? null : _mapper.Map<VehicleDto>(vehicle);
         }
