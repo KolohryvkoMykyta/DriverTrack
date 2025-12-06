@@ -6,6 +6,7 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.UpdateFuelEntry
         Guid Id,
         DateTime Date,
         double OdometerReading,
-        double Liters
+        double Liters,
+        bool IsFullTank
     ) : IRequest<Unit>;
 }

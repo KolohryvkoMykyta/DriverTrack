@@ -31,6 +31,7 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.UpdateFuelEntry
             entry.Date = request.Date;
             entry.OdometerReading = request.OdometerReading;
             entry.Liters = request.Liters;
+            entry.IsFullTank = request.IsFullTank;
 
             _fuelEntryRepository.Update(entry);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

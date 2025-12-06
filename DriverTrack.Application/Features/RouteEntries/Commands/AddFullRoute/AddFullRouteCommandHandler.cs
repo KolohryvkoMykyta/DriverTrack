@@ -1,13 +1,7 @@
 ﻿using DriverTrack.Application.Common.Exceptions;
-using DriverTrack.Application.Common.Interfaces;
 using DriverTrack.Application.Interfaces;
 using DriverTrack.Domain.Entities;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DriverTrack.Application.Features.RouteEntries.Commands.AddFullRoute
 {

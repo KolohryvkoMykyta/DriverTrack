@@ -1,0 +1,6 @@
+@DriverTrack.WebAPI_HostAddress = http://localhost:5208
+
+GET {{DriverTrack.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

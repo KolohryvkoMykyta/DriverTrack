@@ -8,5 +8,5 @@ using System.Threading.Tasks;
 
 namespace DriverTrack.Application.Features.Vehicles.Queries.GetVehicleById
 {
-    public record GetVehicleByIdQuery(Guid Id) : IRequest<VehicleDto?>;
+    public record GetVehicleByIdQuery(Guid Id) : IRequest<VehicleDto>;
 }

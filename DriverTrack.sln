@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36221.1 d17.14
+VisualStudioVersion = 17.14.36221.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriverTrack.Domain", "DriverTrack.Domain\DriverTrack.Domain.csproj", "{1E460920-76B3-4414-A676-CB6AD8AABC6F}"
 EndProject
@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriverTrack.Application", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriverTrack.Infrastructure", "DriverTrack.Infrastructure\DriverTrack.Infrastructure.csproj", "{7A22D139-81DE-416F-B0C0-06356DB3EFA7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriverTrack.Web", "DriverTrack.Web\DriverTrack.Web.csproj", "{482724EE-294F-453D-A44D-609F42A2DBC9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriverTrack.WebAPI", "DriverTrack.WebAPI\DriverTrack.WebAPI.csproj", "{36AF466F-7A95-4C93-BFEB-F5C7D6BC6ADC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +29,10 @@ Global
 		{7A22D139-81DE-416F-B0C0-06356DB3EFA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A22D139-81DE-416F-B0C0-06356DB3EFA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A22D139-81DE-416F-B0C0-06356DB3EFA7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{482724EE-294F-453D-A44D-609F42A2DBC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{482724EE-294F-453D-A44D-609F42A2DBC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{482724EE-294F-453D-A44D-609F42A2DBC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{482724EE-294F-453D-A44D-609F42A2DBC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36AF466F-7A95-4C93-BFEB-F5C7D6BC6ADC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36AF466F-7A95-4C93-BFEB-F5C7D6BC6ADC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36AF466F-7A95-4C93-BFEB-F5C7D6BC6ADC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36AF466F-7A95-4C93-BFEB-F5C7D6BC6ADC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

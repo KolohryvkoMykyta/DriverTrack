@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DriverTrack.Infrastructure.Migrations
 {
     [DbContext(typeof(DriverTrackDbContext))]
-    [Migration("20251104163520_InitialCreate")]
+    [Migration("20251116130820_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
