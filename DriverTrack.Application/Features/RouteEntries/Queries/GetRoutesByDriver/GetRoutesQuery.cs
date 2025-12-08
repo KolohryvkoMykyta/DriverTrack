@@ -3,9 +3,9 @@ using MediatR;
 
 namespace DriverTrack.Application.Features.RouteEntries.Queries.GetRoutesByDriver
 {
-    public record GetRoutesByDriverQuery(
-        Guid DriverId,
-        DateTime? From,
-        DateTime? To
+    public record GetRoutesQuery(
+        Guid? DriverId,
+        DateTime? FromDate,
+        DateTime? ToDate
     ) : IRequest<List<RouteEntryDto>>;
 }

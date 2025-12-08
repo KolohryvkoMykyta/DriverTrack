@@ -1,4 +1,5 @@
 ﻿using DriverTrack.Application.Common.Constants;
+using DriverTrack.Application.Common.Exceptions;
 using DriverTrack.Application.DTOs;
 using DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry;
 using DriverTrack.Application.Features.FuelEntries.Commands.DeleteFuelEntry;
@@ -41,7 +42,7 @@ namespace DriverTrack.WebAPI.Controllers
         {
             if (driverId.HasValue && vehicleId.HasValue)
             {
-                return BadRequest(ErrorMessages.OnlyOneFilterAllowed);
+                throw new BusinessException(ErrorMessages.Filters.OnlyOneFilterAllowed);
             }
 
             if (driverId.HasValue)
@@ -58,7 +59,7 @@ namespace DriverTrack.WebAPI.Controllers
                 return Ok(result);
             }
 
-            return BadRequest(ErrorMessages.DriverOrVehicleRequired);
+            throw new BusinessException(ErrorMessages.Filters.DriverOrVehicleRequired);
         }
 
         [HttpPost]

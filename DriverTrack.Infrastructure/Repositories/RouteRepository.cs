@@ -21,12 +21,11 @@ namespace DriverTrack.Infrastructure.Repositories
                 .FirstOrDefaultAsync(re => re.Id == id, cancellationToken);
         }
 
-        public Task<List<RouteEntry>> GetByDriverIdWithDateFilterAsync(Guid driverId, DateTime? from = null, DateTime? to = null, CancellationToken cancellationToken = default)
+        public Task<List<RouteEntry>> GetWithFiltersAsync(Guid? driverId, DateTime? from = null, DateTime? to = null, CancellationToken cancellationToken = default)
         {
-            var query = _dbContext.RouteEntries
-                .AsNoTracking()
-                .Where(re => re.DriverId == driverId);
+            var query = _dbContext.RouteEntries.AsNoTracking().AsQueryable();
 
+            if (driverId.HasValue) query = query.Where(re => re.DriverId == driverId.Value);
             if (from.HasValue) query = query.Where(re => re.StartDate >= from.Value);
             if (to.HasValue) query = query.Where(re => re.StartDate <= to.Value);
 

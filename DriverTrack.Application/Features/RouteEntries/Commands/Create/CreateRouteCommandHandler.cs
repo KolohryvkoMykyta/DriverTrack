@@ -27,7 +27,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.Create
             var openRoute = await _routeRepository.GetOpenRouteAsync(request.DriverId, cancellationToken);
 
             if (openRoute is not null)
-                throw new BusinessException(ErrorMessages.RouteOpenAlreadyExists);
+                throw new BusinessException(ErrorMessages.Route.OpenAlreadyExists);
 
             var routeType = await _routeTypeRepository.GetByIdAsync(request.RouteTypeId, cancellationToken);
             

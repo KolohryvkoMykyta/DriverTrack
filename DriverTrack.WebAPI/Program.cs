@@ -1,5 +1,6 @@
 using DriverTrack.Application;
 using DriverTrack.Infrastructure.DependencyInjection;
+using DriverTrack.WebAPI.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,8 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddInfrastructureServices();
 
 var app = builder.Build();
+
+app.UseExceptionHandling();
 
 app.UseSwagger();
 app.UseSwaggerUI();

@@ -27,7 +27,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
                 throw new NotFoundException(nameof(RouteEntry), request.RouteId);
 
             if (route.EndDate is not null)
-                throw new BusinessException(ErrorMessages.RouteAlreadyClosed);
+                throw new BusinessException(ErrorMessages.Route.AlreadyClosed);
 
             route.EndOdometer = request.EndOdometer;
             route.EndDate = request.EndDate ?? DateTime.UtcNow;

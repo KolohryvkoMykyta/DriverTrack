@@ -1,4 +1,6 @@
-﻿using DriverTrack.Application.Common.Interfaces;
+﻿using DriverTrack.Application.Common.Constants;
+using DriverTrack.Application.Common.Exceptions;
+using DriverTrack.Application.Common.Interfaces;
 using DriverTrack.Application.Interfaces;
 using DriverTrack.Domain.Entities;
 using MediatR;
@@ -9,19 +11,22 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
     {
         private readonly IFuelEntryRepository _fuelEntryRepository;
         private readonly IVehicleRepository _vehicleRepository;
+        private readonly IDriverRepository _driverRepository;
         private readonly IFuelConsumptionCalculator _consumptionCalculator;
         private readonly IVehicleAverageConsumptionCalculator _vehicleAverageConsumptionCalculator;
         private readonly IUnitOfWork _unitOfWork;
 
         public CreateFuelEntryCommandHandler(
             IFuelEntryRepository fuelEntryRepository, 
-            IVehicleRepository vehicleRepository, 
+            IVehicleRepository vehicleRepository,
+            IDriverRepository driverRepository,
             IFuelConsumptionCalculator consumptionCalculator, 
             IVehicleAverageConsumptionCalculator vehicleAverageConsumptionCalculator,
             IUnitOfWork unitOfWork)
         {
             _fuelEntryRepository = fuelEntryRepository;
             _vehicleRepository = vehicleRepository;
+            _driverRepository = driverRepository;
             _consumptionCalculator = consumptionCalculator;
             _vehicleAverageConsumptionCalculator = vehicleAverageConsumptionCalculator;
             _unitOfWork = unitOfWork;
@@ -29,6 +34,12 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
 
         public async Task<Guid> Handle(CreateFuelEntryCommand request, CancellationToken cancellationToken)
         {
+            if (await _driverRepository.GetByIdAsync(request.DriverId, cancellationToken) is null)
+                throw new BusinessException(ErrorMessages.FuelEntries.DriverNotFoundById(request.DriverId));
+
+            if (await _vehicleRepository.GetByIdAsync(request.VehicleId, cancellationToken) is null)
+                throw new BusinessException(ErrorMessages.FuelEntries.VehicleNotFoundById(request.VehicleId));
+
 
             var entry = new FuelEntry
             {
@@ -37,7 +48,8 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
                 VehicleId = request.VehicleId,
                 Date = request.Date,
                 OdometerReading = request.OdometerReading,
-                Liters = request.Liters
+                Liters = request.Liters,
+                IsFullTank = request.IsFullTank
             };
 
             if (request.IsFullTank)
@@ -54,6 +66,7 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
             }
 
             await _fuelEntryRepository.AddAsync(entry, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             if (request.IsFullTank)
             {
@@ -64,10 +77,9 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
                     vehicle.AverageFuelConsumption = await _vehicleAverageConsumptionCalculator.CalculateAsync(request.VehicleId, cancellationToken);
                     
                     _vehicleRepository.Update(vehicle);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
                 }
             }
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return entry.Id;
         }

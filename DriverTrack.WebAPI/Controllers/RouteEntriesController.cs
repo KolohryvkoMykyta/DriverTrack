@@ -44,13 +44,13 @@ namespace DriverTrack.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<RouteEntryDto>>> GetByDriver(
-            [FromQuery] Guid driverId,
-            [FromQuery] DateTime? from,
-            [FromQuery] DateTime? to,
+        public async Task<ActionResult<List<RouteEntryDto>>> GetRoutes(
+            [FromQuery] Guid? driverId,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
             CancellationToken ct)
         {
-            var routes = await _mediator.Send(new GetRoutesByDriverQuery(driverId, from, to), ct);
+            var routes = await _mediator.Send(new GetRoutesQuery(driverId, fromDate, toDate), ct);
 
             return Ok(routes);
         }
