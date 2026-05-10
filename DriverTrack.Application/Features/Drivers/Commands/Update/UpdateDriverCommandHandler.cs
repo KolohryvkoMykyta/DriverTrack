@@ -1,4 +1,5 @@
 ﻿using DriverTrack.Application.Common.Exceptions;
+using DriverTrack.Application.Common.Interfaces;
 using DriverTrack.Application.Interfaces;
 using DriverTrack.Domain.Entities;
 using MediatR;
@@ -9,11 +10,14 @@ public class UpdateDriverCommandHandler : IRequestHandler<UpdateDriverCommand, U
 {
     private readonly IDriverRepository _driverRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPhoneNumberNormalizer _phoneNumberNormalizer;
 
-    public UpdateDriverCommandHandler(IDriverRepository repository, IUnitOfWork unitOfWork)
+
+    public UpdateDriverCommandHandler(IDriverRepository repository, IUnitOfWork unitOfWork, IPhoneNumberNormalizer phoneNumberNormalizer)
     {
         _driverRepository = repository;
         _unitOfWork = unitOfWork;
+        _phoneNumberNormalizer = phoneNumberNormalizer;
     }
 
     public async Task<Unit> Handle(UpdateDriverCommand request, CancellationToken cancellationToken)
@@ -24,7 +28,7 @@ public class UpdateDriverCommandHandler : IRequestHandler<UpdateDriverCommand, U
             throw new NotFoundException(nameof(Driver), request.Id);
 
         driver.Name = request.Name;
-        driver.PhoneNumber = request.PhoneNumber;
+        driver.PhoneNumber = _phoneNumberNormalizer.NormalizeToE164(request.PhoneNumber);
         driver.IsActive = request.IsActive;
 
         _driverRepository.Update(driver);

@@ -1,5 +1,6 @@
 ﻿using DriverTrack.Application.Common.Exceptions;
 using DriverTrack.WebAPI.Common;
+using FluentValidation;
 using System.Net;
 using System.Text.Json;
 
@@ -30,8 +31,6 @@ namespace DriverTrack.WebAPI.Middleware
 
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            _logger.LogError(exception, "Unhandled exception");
-
             var response = context.Response;
             response.ContentType = "application/json";
 
@@ -48,11 +47,25 @@ namespace DriverTrack.WebAPI.Middleware
                 case BusinessException businessEx:
                     statusCode = HttpStatusCode.BadRequest;
                     error = new ApiErrorResponse(businessEx.Code, businessEx.Message);
+                    _logger.LogWarning(exception, "Business exception occurred");
+                    break;
+
+                case ValidationException validationEx:
+                    statusCode = HttpStatusCode.BadRequest;
+
+                    var errors = validationEx.Errors
+                        .GroupBy(e => e.PropertyName)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Select(e => e.ErrorMessage).Distinct().ToArray());
+
+                    error = new ApiErrorResponse("validation_error", "Validation failed.", errors);
                     break;
 
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     error = new ApiErrorResponse("internal_error", "An unexpected error occurred.");
+                    _logger.LogError(exception, "Unhandled exception");
                     break;
             }
 

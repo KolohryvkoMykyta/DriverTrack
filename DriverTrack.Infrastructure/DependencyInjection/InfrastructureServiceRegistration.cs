@@ -28,6 +28,8 @@ namespace DriverTrack.Infrastructure.DependencyInjection
             services.AddScoped<IFuelConsumptionCalculator, FuelConsumptionCalculator>();
             services.AddScoped<IVehicleAverageConsumptionCalculator, VehicleAverageConsumptionCalculator>();
 
+            services.AddSingleton<IPhoneNumberNormalizer, LibPhoneNumberNormalizer>();
+
             return services;
         }
     }

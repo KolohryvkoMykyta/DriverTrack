@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using System;
 
 namespace DriverTrack.Application.Features.Drivers.Commands.Delete;
 

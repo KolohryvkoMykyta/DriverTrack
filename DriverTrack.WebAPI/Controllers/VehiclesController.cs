@@ -8,7 +8,6 @@ using DriverTrack.Application.Features.Vehicles.Queries.GetVehiclesByDriver;
 using DriverTrack.WebAPI.Contracts.Vehicles;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using DriverTrack.Application.Common.Constants;
 
 namespace DriverTrack.WebAPI.Controllers;
 

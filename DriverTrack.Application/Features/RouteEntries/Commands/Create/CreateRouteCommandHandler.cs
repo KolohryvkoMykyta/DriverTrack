@@ -1,4 +1,4 @@
-﻿using DriverTrack.Application.Common.Constants;
+﻿using DriverTrack.Application.Common.Constants.ErrorMessages;
 using DriverTrack.Application.Common.Exceptions;
 using DriverTrack.Application.Interfaces;
 using DriverTrack.Domain.Entities;

@@ -1,4 +1,4 @@
-﻿namespace DriverTrack.Application.Common.Constants
+﻿namespace DriverTrack.Application.Common.Constants.ErrorMessages
 {
     public static class ErrorMessages
     {
@@ -34,6 +34,12 @@
             public static ErrorMessage VehicleNotFoundById(Guid id) =>
                 new("vehicle_not_found",
                     $"Автомобіль з id '{id}' не знайдено.");
+        }
+
+        public static class Drivers
+        {
+            public static readonly ErrorMessage InvalidPhoneNumber =
+                new("driver_invalid_phone_number", "Невірний номер телефону.");
         }
     }
 }

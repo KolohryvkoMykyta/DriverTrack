@@ -1,4 +1,11 @@
-﻿namespace DriverTrack.WebAPI.Contracts.Drivers
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace DriverTrack.WebAPI.Contracts.Drivers
 {
-    public record CreateDriverRequest(string Name, string PhoneNumber);
+    public sealed record CreateDriverRequest
+    {
+        public string Name { get; init; } = string.Empty;
+
+        public string PhoneNumber { get; init; } = string.Empty;
+    }
 }
