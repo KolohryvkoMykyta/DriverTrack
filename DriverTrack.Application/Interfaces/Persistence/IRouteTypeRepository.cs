@@ -1,6 +1,6 @@
 ﻿using DriverTrack.Domain.Entities;
 
-namespace DriverTrack.Application.Interfaces;
+namespace DriverTrack.Application.Interfaces.Persistence;
 
 public interface IRouteTypeRepository
 {

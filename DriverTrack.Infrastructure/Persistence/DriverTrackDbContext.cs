@@ -13,6 +13,7 @@ namespace DriverTrack.Infrastructure.Persistence
         public DbSet<FuelEntry> FuelEntries => Set<FuelEntry>();
         public DbSet<RouteEntry> RouteEntries => Set<RouteEntry>();
         public DbSet<RouteType> RouteTypes => Set<RouteType>();
+        public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

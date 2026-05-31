@@ -41,5 +41,20 @@
             public static readonly ErrorMessage InvalidPhoneNumber =
                 new("driver_invalid_phone_number", "Невірний номер телефону.");
         }
+
+        public static class Auth
+        {
+            public static readonly ErrorMessage InvalidEmailOrPassword =
+                new("invalid_email_or_password",
+                    "Невірний email або пароль.");
+
+            public static readonly ErrorMessage EmailAlreadyRegistered =
+                new("email_already_registered",
+                    "Email вже зареєстрований.");
+
+            public static readonly ErrorMessage UserIsInactive =
+                new("user_inactive",
+                    "Користувач деактивований.");
+        }
     }
 }

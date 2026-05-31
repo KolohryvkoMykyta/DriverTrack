@@ -9,12 +9,14 @@ using DriverTrack.Application.Features.FuelEntries.Queries.GetFuelByVehicleId;
 using DriverTrack.Application.Features.FuelEntries.Queries.GetFuelEntryById;
 using DriverTrack.WebAPI.Contracts.FuelEntries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DriverTrack.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin")]
     public class FuelEntriesController : ControllerBase
     {
         private readonly IMediator _mediator;

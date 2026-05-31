@@ -5,12 +5,14 @@ using DriverTrack.Application.Features.Drivers.Commands.Update;
 using DriverTrack.Application.Features.Drivers.Queries;
 using DriverTrack.WebAPI.Contracts.Drivers;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DriverTrack.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin")]
     public class DriversController : ControllerBase
     {
         private readonly IMediator _mediator;

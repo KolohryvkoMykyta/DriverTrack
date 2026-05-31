@@ -1,5 +1,5 @@
 ﻿using DriverTrack.Application.Common.Exceptions;
-using DriverTrack.Application.Interfaces;
+using DriverTrack.Application.Interfaces.Persistence;
 using DriverTrack.Domain.Entities;
 using MediatR;
 

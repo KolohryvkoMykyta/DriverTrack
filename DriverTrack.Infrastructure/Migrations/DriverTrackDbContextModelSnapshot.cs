@@ -159,6 +159,44 @@ namespace DriverTrack.Infrastructure.Migrations
                     b.ToTable("RouteTypes");
                 });
 
+            modelBuilder.Entity("DriverTrack.Domain.Entities.UserAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("DriverId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverId")
+                        .IsUnique();
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("UserAccounts");
+                });
+
             modelBuilder.Entity("DriverTrack.Domain.Entities.Vehicle", b =>
                 {
                     b.Property<Guid>("Id")
@@ -247,6 +285,16 @@ namespace DriverTrack.Infrastructure.Migrations
                     b.Navigation("RouteType");
 
                     b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("DriverTrack.Domain.Entities.UserAccount", b =>
+                {
+                    b.HasOne("DriverTrack.Domain.Entities.Driver", "Driver")
+                        .WithOne()
+                        .HasForeignKey("DriverTrack.Domain.Entities.UserAccount", "DriverId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Driver");
                 });
 
             modelBuilder.Entity("DriverTrack.Domain.Entities.Vehicle", b =>

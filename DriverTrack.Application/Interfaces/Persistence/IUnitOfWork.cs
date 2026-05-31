@@ -1,4 +1,4 @@
-﻿namespace DriverTrack.Application.Interfaces
+﻿namespace DriverTrack.Application.Interfaces.Persistence
 {
     public interface IUnitOfWork
     {

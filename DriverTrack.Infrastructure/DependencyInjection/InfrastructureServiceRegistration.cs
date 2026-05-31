@@ -1,7 +1,11 @@
 ﻿using DriverTrack.Application.Common.Interfaces;
-using DriverTrack.Application.Interfaces;
+using DriverTrack.Application.Interfaces.Persistence;
+using DriverTrack.Application.Interfaces.Security;
+using DriverTrack.Infrastructure.Auth;
 using DriverTrack.Infrastructure.Persistence;
+using DriverTrack.Infrastructure.Persistence.Repositories;
 using DriverTrack.Infrastructure.Repositories;
+using DriverTrack.Infrastructure.Security;
 using DriverTrack.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +31,11 @@ namespace DriverTrack.Infrastructure.DependencyInjection
 
             services.AddScoped<IFuelConsumptionCalculator, FuelConsumptionCalculator>();
             services.AddScoped<IVehicleAverageConsumptionCalculator, VehicleAverageConsumptionCalculator>();
+
+            services.AddScoped<IUserAccountRepository, UserAccountRepository>();
+            services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+
+            services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
             services.AddSingleton<IPhoneNumberNormalizer, LibPhoneNumberNormalizer>();
 

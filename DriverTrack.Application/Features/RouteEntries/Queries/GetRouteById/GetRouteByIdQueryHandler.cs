@@ -2,7 +2,7 @@
 using DriverTrack.Application.Common.Constants;
 using DriverTrack.Application.Common.Exceptions;
 using DriverTrack.Application.DTOs;
-using DriverTrack.Application.Interfaces;
+using DriverTrack.Application.Interfaces.Persistence;
 using DriverTrack.Domain.Entities;
 using MediatR;
 

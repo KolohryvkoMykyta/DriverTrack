@@ -1,4 +1,4 @@
-﻿using DriverTrack.Application.Interfaces;
+﻿using DriverTrack.Application.Interfaces.Persistence;
 
 namespace DriverTrack.Infrastructure.Persistence
 {

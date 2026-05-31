@@ -6,12 +6,14 @@ using DriverTrack.Application.Features.RouteTypes.Queries.GetAllRouteTypes;
 using DriverTrack.Application.Features.RouteTypes.Queries.GetRouteTypeById;
 using DriverTrack.WebAPI.Contracts.RouteTypes;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DriverTrack.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin")]
     public class RouteTypesController : ControllerBase
     {
         private readonly IMediator _mediator;

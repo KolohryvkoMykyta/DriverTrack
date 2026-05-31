@@ -1,5 +1,5 @@
 ﻿using DriverTrack.Application.Common.Interfaces;
-using DriverTrack.Application.Interfaces;
+using DriverTrack.Application.Interfaces.Persistence;
 
 namespace DriverTrack.Infrastructure.Services
 {

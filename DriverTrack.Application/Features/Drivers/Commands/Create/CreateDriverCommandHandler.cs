@@ -1,5 +1,5 @@
 ﻿using DriverTrack.Application.Common.Interfaces;
-using DriverTrack.Application.Interfaces;
+using DriverTrack.Application.Interfaces.Persistence;
 using DriverTrack.Domain.Entities;
 using MediatR;
 

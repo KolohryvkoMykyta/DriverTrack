@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DriverTrack.Application.Interfaces
+namespace DriverTrack.Application.Interfaces.Persistence
 {
     public interface IFuelEntryRepository
     {

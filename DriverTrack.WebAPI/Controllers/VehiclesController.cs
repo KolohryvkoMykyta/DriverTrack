@@ -1,18 +1,20 @@
 ﻿using DriverTrack.Application.DTOs;
 using DriverTrack.Application.Features.Vehicles.Commands.CreateVehicle;
-using DriverTrack.Application.Features.Vehicles.Commands.UpdateVehicle;
 using DriverTrack.Application.Features.Vehicles.Commands.DeleteVehicle;
+using DriverTrack.Application.Features.Vehicles.Commands.UpdateVehicle;
 using DriverTrack.Application.Features.Vehicles.Queries.GetAllVehicles;
 using DriverTrack.Application.Features.Vehicles.Queries.GetVehicleById;
 using DriverTrack.Application.Features.Vehicles.Queries.GetVehiclesByDriver;
 using DriverTrack.WebAPI.Contracts.Vehicles;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DriverTrack.WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Admin")]
 public class VehiclesController : ControllerBase
 {
     private readonly IMediator _mediator;

@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using DriverTrack.Application.DTOs;
-using DriverTrack.Application.Interfaces;
+using DriverTrack.Application.Interfaces.Persistence;
 using MediatR;
 
 namespace DriverTrack.Application.Features.FuelEntries.Queries.GetFuelByVehicleId

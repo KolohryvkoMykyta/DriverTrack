@@ -62,6 +62,16 @@ namespace DriverTrack.WebAPI.Middleware
                     error = new ApiErrorResponse("validation_error", "Validation failed.", errors);
                     break;
 
+                case ConflictException conflictEx:
+                    statusCode = HttpStatusCode.Conflict;
+                    error = new ApiErrorResponse(conflictEx.Code, conflictEx.Message);
+                    break;
+
+                case UnauthorizedException unauthorizedEx:
+                    statusCode = HttpStatusCode.Unauthorized;
+                    error = new ApiErrorResponse(unauthorizedEx.Code, unauthorizedEx.Message);
+                    break;
+
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     error = new ApiErrorResponse("internal_error", "An unexpected error occurred.");
