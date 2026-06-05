@@ -55,6 +55,10 @@
             public static readonly ErrorMessage UserIsInactive =
                 new("user_inactive",
                     "Користувач деактивований.");
+
+            public static readonly ErrorMessage UserNotAuthorized =
+                new("user_not_authorized",
+                    "Користувач не авторизований.");
         }
     }
 }

@@ -22,6 +22,17 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddValidatorsFromAssembly(
     typeof(ApplicationAssemblyMarker).Assembly);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddTransient(
     typeof(IPipelineBehavior<,>),
     typeof(ValidationPipelineBehavior<,>));
@@ -60,6 +71,8 @@ app.UseExceptionHandling();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseCors("Frontend");
 
 app.UseAuthentication();
 app.UseAuthorization();

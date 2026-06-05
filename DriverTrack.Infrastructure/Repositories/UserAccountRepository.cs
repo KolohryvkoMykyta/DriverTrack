@@ -35,5 +35,14 @@ namespace DriverTrack.Infrastructure.Persistence.Repositories
         {
             await _dbContext.UserAccounts.AddAsync(userAccount, cancellationToken);
         }
+
+        public async Task<UserAccount?> GetByIdWithDriverAsync(
+            Guid id,
+            CancellationToken cancellationToken)
+        {
+            return await _dbContext.UserAccounts
+                .Include(x => x.Driver)
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        }
     }
 }

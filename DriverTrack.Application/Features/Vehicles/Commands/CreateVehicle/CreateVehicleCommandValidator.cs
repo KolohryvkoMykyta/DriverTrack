@@ -7,10 +7,6 @@ namespace DriverTrack.Application.Features.Vehicles.Commands.CreateVehicle
     {
         public CreateVehicleCommandValidator()
         {
-            RuleFor(x => x.DriverId)
-                .NotEmpty()
-                .WithMessage("DriverId is required.");
-
             RuleFor(x => x.Brand)
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty()

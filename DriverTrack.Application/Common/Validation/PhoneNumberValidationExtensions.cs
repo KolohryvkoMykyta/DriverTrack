@@ -1,6 +1,5 @@
 ﻿using FluentValidation;
 using PhoneNumbers;
-using DriverTrack.Application.Common.Constants.Validation;
 
 namespace DriverTrack.Application.Common.Validation
 {

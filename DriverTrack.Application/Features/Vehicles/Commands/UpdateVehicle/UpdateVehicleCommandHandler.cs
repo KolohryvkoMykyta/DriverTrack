@@ -27,6 +27,7 @@ namespace DriverTrack.Application.Features.Vehicles.Commands.UpdateVehicle
             vehicle.Model = request.Model;
             vehicle.LicensePlate = request.LicensePlate;
             vehicle.IsActive = request.IsActive;
+            vehicle.DriverId = request.DriverId;
 
             _vehicleRepository.Update(vehicle);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

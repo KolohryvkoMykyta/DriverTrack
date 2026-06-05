@@ -59,7 +59,7 @@ public class VehiclesController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVehicleRequest request, CancellationToken ct)
     {
-        var command = new UpdateVehicleCommand(id, request.Brand, request.Model, request.LicensePlate, request.IsActive);
+        var command = new UpdateVehicleCommand(id, request.Brand, request.Model, request.LicensePlate, request.IsActive, request.DriverId);
 
         await _mediator.Send(command, ct);
 

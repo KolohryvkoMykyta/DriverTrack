@@ -7,10 +7,6 @@ namespace DriverTrack.Application.Features.RouteEntries.Queries.GetRoutesByDrive
     {
         public GetRoutesQueryValidator()
         {
-            RuleFor(x => x.DriverId)
-                .NotEmpty()
-                .WithMessage("Driver id is required.");
-
             RuleFor(x => x)
                 .HasValidInterval(x => x.FromDate, x => x.ToDate)
                 .WithMessage("From date must be less than or equal to To date.");

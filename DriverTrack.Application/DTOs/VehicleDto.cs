@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DriverTrack.Application.DTOs
+﻿namespace DriverTrack.Application.DTOs
 {
     public class VehicleDto
     {
@@ -14,7 +8,7 @@ namespace DriverTrack.Application.DTOs
         public string LicensePlate { get; set; } = default!;
         public bool IsActive { get; set; }
 
-        public Guid DriverId { get; set; }
+        public Guid? DriverId { get; set; }
 
         public double? AverageFuelConsumption { get; set; }
     }

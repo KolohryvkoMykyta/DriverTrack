@@ -211,7 +211,7 @@ namespace DriverTrack.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("DriverId")
+                    b.Property<Guid?>("DriverId")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -302,8 +302,7 @@ namespace DriverTrack.Infrastructure.Migrations
                     b.HasOne("DriverTrack.Domain.Entities.Driver", "Driver")
                         .WithMany("Vehicles")
                         .HasForeignKey("DriverId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Driver");
                 });

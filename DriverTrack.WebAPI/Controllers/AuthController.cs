@@ -2,10 +2,12 @@
 using DriverTrack.Application.Features.Auth.Commands.Login;
 using DriverTrack.Application.Features.Auth.Commands.RegisterAdmin;
 using DriverTrack.Application.Features.Auth.Commands.RegisterDriver;
+using DriverTrack.Application.Features.Auth.Queries.GetCurrentUser;
 using DriverTrack.WebAPI.Contracts.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace DriverTrack.WebAPI.Controllers
 {
@@ -62,6 +64,24 @@ namespace DriverTrack.WebAPI.Controllers
             var response = await _mediator.Send(command, cancellationToken);
 
             return Ok(response);
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<ActionResult<CurrentUserDto>> Me(CancellationToken cancellationToken)
+        {
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userIdValue, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var currentUser = await _mediator.Send(
+                new GetCurrentUserQuery(userId),
+                cancellationToken);
+
+            return Ok(currentUser);
         }
     }
 }

@@ -7,6 +7,7 @@ namespace DriverTrack.Application.Features.Vehicles.Commands.UpdateVehicle
         string Brand,
         string Model,
         string LicensePlate,
-        bool IsActive
+        bool IsActive,
+        Guid? DriverId
     ) : IRequest<Unit>;
 }

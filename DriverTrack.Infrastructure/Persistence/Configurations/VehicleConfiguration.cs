@@ -25,6 +25,9 @@ namespace DriverTrack.Infrastructure.Persistence.Configurations
             builder.Property(vehicle => vehicle.IsActive)
                 .HasDefaultValue(true);
 
+            builder.Property(vehicle => vehicle.DriverId)
+                .IsRequired(false);
+
             builder.HasOne(vehicle => vehicle.Driver)
                 .WithMany(driver => driver.Vehicles)
                 .HasForeignKey(vehicle => vehicle.DriverId)

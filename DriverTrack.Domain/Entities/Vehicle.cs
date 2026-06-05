@@ -8,7 +8,7 @@
         public string LicensePlate { get; set; } = default!;
         public bool IsActive { get; set; } = true;
 
-        public Guid DriverId { get; set; }
+        public Guid? DriverId { get; set; }
         public Driver? Driver { get; set; }
 
         public double? AverageFuelConsumption { get; set; }

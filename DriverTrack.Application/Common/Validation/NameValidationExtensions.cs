@@ -12,14 +12,14 @@ namespace DriverTrack.Application.Common.Validation
 
         public static IRuleBuilderOptions<T, string> RequiredPersonName<T>(
             this IRuleBuilder<T, string> ruleBuilder,
-            int minLenght,
-            int maxLenght)
+            int minLength,
+            int maxLength)
         {
             return ruleBuilder
-                .NotEmpty().WithMessage("Name is required.")
-                .MinimumLength(minLenght).WithMessage($"Name must be at least {minLenght} characters.")
-                .MaximumLength(maxLenght).WithMessage($"Name must be at most {maxLenght} characters.")
-                .ValidPersonName().WithMessage("Name must contain letters and may include spaces, hyphens and apostrophes.");
+                .NotEmpty().WithMessage("Ім'я є обов'язковим.")
+                .MinimumLength(minLength).WithMessage($"Ім'я має містити щонайменше {minLength} символи.")
+                .MaximumLength(maxLength).WithMessage($"Ім'я має містити не більше {maxLength} символів.")
+                .ValidPersonName().WithMessage("Ім'я може містити лише літери, пробіли, дефіси та апострофи.");
         }
 
         private static bool IsValidPersonName(string? name)
