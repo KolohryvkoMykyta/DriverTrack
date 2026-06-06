@@ -14,7 +14,10 @@ namespace DriverTrack.Infrastructure.Persistence.Configurations
                 .HasMaxLength(100)
                 .IsRequired();
 
-            builder.Property(routeType => routeType.Earnings)
+            builder.Property(routeType => routeType.DriverPayment)
+                .HasPrecision(18, 2);
+
+            builder.Property(routeType => routeType.Revenue)
                 .HasPrecision(18, 2);
 
             builder.HasIndex(routeType => routeType.Name)

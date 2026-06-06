@@ -5,6 +5,7 @@ namespace DriverTrack.Application.Features.RouteTypes.Commands.UpdateRouteType
     public record UpdateRouteTypeCommand(
         Guid Id,
         string Name,
-        decimal Earnings
+        decimal DriverPayment,
+        decimal Revenue
     ) : IRequest<Unit>;
 }

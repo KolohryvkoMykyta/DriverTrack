@@ -9,22 +9,19 @@ namespace DriverTrack.Application.Features.RouteTypes.Commands.UpdateRouteType
         {
             RuleFor(x => x.Id)
                 .NotEmpty()
-                .WithMessage("Route type id is required.");
+                .WithMessage("Необхідно обрати тип маршруту.");
 
-            RuleFor(x => x.Name)
-                .Cascade(CascadeMode.Stop)
-                .NotEmpty()
-                .WithMessage("Name is required.")
-                .MinimumLength(RouteTypeValidationConstants.NameMinLength)
-                .WithMessage($"Name must be at least {RouteTypeValidationConstants.NameMinLength} characters.")
-                .MaximumLength(RouteTypeValidationConstants.NameMaxLength)
-                .WithMessage($"Name must be at most {RouteTypeValidationConstants.NameMaxLength} characters.");
-
-            RuleFor(x => x.Earnings)
+            RuleFor(x => x.DriverPayment)
                 .GreaterThanOrEqualTo(0)
-                .WithMessage("Earnings must be greater than or equal to 0.")
-                .LessThanOrEqualTo(RouteTypeValidationConstants.MaxEarnings)
-                .WithMessage($"Earnings must be less than or equal to {RouteTypeValidationConstants.MaxEarnings}.");
+                .WithMessage("Оплата водію має бути більшою або дорівнювати 0.")
+                .LessThanOrEqualTo(RouteTypeValidationConstants.MaxDriverPayment)
+                .WithMessage($"Оплата водію має бути не більше {RouteTypeValidationConstants.MaxDriverPayment}.");
+
+            RuleFor(x => x.Revenue)
+                .GreaterThanOrEqualTo(0)
+                .WithMessage("Дохід має бути більшим або дорівнювати 0.")
+                .LessThanOrEqualTo(RouteTypeValidationConstants.MaxRevenue)
+                .WithMessage($"Дохід має бути не більше {RouteTypeValidationConstants.MaxRevenue}.");
         }
     }
 }

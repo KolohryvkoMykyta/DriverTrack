@@ -42,7 +42,8 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.Create
                 RouteTypeId = request.RouteTypeId,
                 StartDate = request.StartDate,
                 StartOdometer = request.StartOdometer,
-                Earnings = routeType.Earnings
+                DriverPayment = routeType.DriverPayment,
+                Revenue = routeType.Revenue
             };
 
             await _routeRepository.AddAsync(route, cancellationToken);

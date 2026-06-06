@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace DriverTrack.WebAPI.Contracts.Drivers
+﻿namespace DriverTrack.WebAPI.Contracts.Drivers
 {
     public sealed record CreateDriverRequest
     {

@@ -25,6 +25,7 @@ namespace DriverTrack.Infrastructure.DependencyInjection
 
             services.AddScoped<IDriverRepository, DriverRepository>();
             services.AddScoped<IFuelEntryRepository, FuelEntryRepository>();
+            services.AddScoped<IFuelPriceRepository, FuelPriceRepository>();
             services.AddScoped<IRouteRepository, RouteRepository>();
             services.AddScoped<IRouteTypeRepository, RouteTypeRepository>();
             services.AddScoped<IVehicleRepository, VehicleRepository>();

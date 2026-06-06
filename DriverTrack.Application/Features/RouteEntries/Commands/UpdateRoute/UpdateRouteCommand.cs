@@ -11,6 +11,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
         DateTime? EndDate,
         double? EndOdometer,
         double? TotalDistance, 
-        decimal? Earnings
+        decimal? DriverPayment,
+        decimal? Revenue
     ) : IRequest<Unit>;
 }

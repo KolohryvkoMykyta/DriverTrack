@@ -40,7 +40,8 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
             else if (request.EndOdometer is not null)
                 route.TotalDistance = request.EndOdometer - route.StartOdometer;
 
-            route.Earnings = request.Earnings ?? route.Earnings;
+            route.DriverPayment = request.DriverPayment ?? route.DriverPayment;
+            route.Revenue = request.Revenue ?? route.Revenue;
 
             if (route.TotalDistance is not null)
             {

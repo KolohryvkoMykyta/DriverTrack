@@ -88,6 +88,26 @@ namespace DriverTrack.Infrastructure.Migrations
                     b.ToTable("FuelEntries");
                 });
 
+            modelBuilder.Entity("DriverTrack.Domain.Entities.FuelPrice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("PricePerLiter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EffectiveFrom");
+
+                    b.ToTable("FuelPrices");
+                });
+
             modelBuilder.Entity("DriverTrack.Domain.Entities.RouteEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -97,7 +117,7 @@ namespace DriverTrack.Infrastructure.Migrations
                     b.Property<Guid>("DriverId")
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Earnings")
+                    b.Property<decimal>("DriverPayment")
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
@@ -109,6 +129,10 @@ namespace DriverTrack.Infrastructure.Migrations
 
                     b.Property<double?>("FuelUsed")
                         .HasColumnType("REAL");
+
+                    b.Property<decimal>("Revenue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("RouteTypeId")
                         .HasColumnType("TEXT");
@@ -142,13 +166,17 @@ namespace DriverTrack.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Earnings")
+                    b.Property<decimal>("DriverPayment")
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Revenue")
+                        .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

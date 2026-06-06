@@ -16,6 +16,7 @@
         public double? TotalDistance { get; set; }
         public double? FuelUsed { get; set; }
 
-        public decimal Earnings { get; set; }
+        public decimal DriverPayment { get; set; }
+        public decimal Revenue { get; set; }
     }
 }

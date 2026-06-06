@@ -26,7 +26,8 @@ namespace DriverTrack.Application.Features.RouteTypes.Commands.CreateRouteType
             {
                 Id = Guid.NewGuid(),
                 Name = request.Name,
-                Earnings = request.Earnings
+                DriverPayment = request.DriverPayment,
+                Revenue = request.Revenue
             };
 
             await _routeTypeRepository.AddAsync(routeType, cancellationToken);

@@ -42,7 +42,7 @@ namespace DriverTrack.WebAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Guid>> Create([FromBody] CreateRouteTypeRequest request, CancellationToken cancellationToken)
         {
-            var id = await _mediator.Send(new CreateRouteTypeCommand(request.Name, request.Earnings), cancellationToken);
+            var id = await _mediator.Send(new CreateRouteTypeCommand(request.Name, request.DriverPayment, request.Revenue), cancellationToken);
 
             return CreatedAtAction(nameof(GetById), new { id }, id);
         }
@@ -50,7 +50,7 @@ namespace DriverTrack.WebAPI.Controllers
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRouteTypeRequest request, CancellationToken cancellationToken)
         {
-            await _mediator.Send(new UpdateRouteTypeCommand(id, request.Name, request.Earnings), cancellationToken);
+            await _mediator.Send(new UpdateRouteTypeCommand(id, request.Name, request.DriverPayment, request.Revenue), cancellationToken);
 
             return NoContent();
         }

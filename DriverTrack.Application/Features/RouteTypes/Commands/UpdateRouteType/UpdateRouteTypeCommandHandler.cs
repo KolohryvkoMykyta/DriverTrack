@@ -24,7 +24,8 @@ namespace DriverTrack.Application.Features.RouteTypes.Commands.UpdateRouteType
                 throw new NotFoundException(nameof(RouteType), request.Id);
 
             routeType.Name = request.Name;
-            routeType.Earnings = request.Earnings;
+            routeType.DriverPayment = request.DriverPayment;
+            routeType.Revenue = request.Revenue;
 
             _routeTypeRepository.Update(routeType);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

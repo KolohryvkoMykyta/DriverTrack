@@ -116,7 +116,8 @@ namespace DriverTrack.WebAPI.Controllers
                     request.EndDate,
                     request.EndOdometer,
                     request.TotalDistance,
-                    request.Earnings),
+                    request.DriverPayment,
+                    request.Revenue),
                 ct);
 
             return NoContent();

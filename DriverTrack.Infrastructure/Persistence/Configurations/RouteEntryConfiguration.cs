@@ -13,7 +13,10 @@ namespace DriverTrack.Infrastructure.Persistence.Configurations
             builder.Property(routeEntry => routeEntry.StartDate)
                 .IsRequired();
 
-            builder.Property(routeEntry => routeEntry.Earnings)
+            builder.Property(routeEntry => routeEntry.DriverPayment)
+                .HasPrecision(18, 2);
+
+            builder.Property(routeEntry => routeEntry.Revenue)
                 .HasPrecision(18, 2);
 
             builder.HasOne(routeEntry => routeEntry.Driver)

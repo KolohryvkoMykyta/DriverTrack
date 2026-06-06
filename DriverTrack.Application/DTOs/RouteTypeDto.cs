@@ -4,6 +4,7 @@
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = default!;
-        public decimal Earnings { get; set; }
+        public decimal DriverPayment { get; set; }
+        public decimal Revenue { get; set; }
     }
 }

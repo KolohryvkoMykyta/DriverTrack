@@ -53,7 +53,8 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.AddFullRoute
                 StartOdometer = request.StartOdometer,
                 EndDate = request.EndDate,
                 EndOdometer = request.EndOdometer,
-                Earnings = routeType.Earnings,
+                DriverPayment = routeType.DriverPayment,
+                Revenue = routeType.Revenue,
                 TotalDistance = totalDistance,
                 FuelUsed = fuelUsed
             };
