@@ -27,11 +27,14 @@ namespace DriverTrack.Infrastructure.DependencyInjection
             services.AddScoped<IFuelEntryRepository, FuelEntryRepository>();
             services.AddScoped<IFuelPriceRepository, FuelPriceRepository>();
             services.AddScoped<IRouteRepository, RouteRepository>();
+            services.AddScoped<IStatisticsRepository, StatisticsRepository>();
             services.AddScoped<IRouteTypeRepository, RouteTypeRepository>();
             services.AddScoped<IVehicleRepository, VehicleRepository>();
 
             services.AddScoped<IFuelConsumptionCalculator, FuelConsumptionCalculator>();
             services.AddScoped<IVehicleAverageConsumptionCalculator, VehicleAverageConsumptionCalculator>();
+            services.AddScoped<IFuelCostCalculator, FuelCostCalculator>();
+            services.AddScoped<IOverviewStatisticsBuilder, OverviewStatisticsBuilder>();
 
             services.AddScoped<IUserAccountRepository, UserAccountRepository>();
             services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();

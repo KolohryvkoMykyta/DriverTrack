@@ -61,6 +61,23 @@ namespace DriverTrack.Infrastructure.Repositories
             return query.OrderBy(fe => fe.Date).ToListAsync(cancellationToken);
         }
 
+        public Task<List<FuelEntry>> GetWithFiltersAsync(DateTime? from = null, DateTime? to = null, CancellationToken cancellationToken = default)
+        {
+            var query = _dbContext.FuelEntries
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(fe => fe.Date >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(fe => fe.Date <= to.Value);
+
+            return query
+                .OrderBy(fe => fe.Date)
+                .ToListAsync(cancellationToken);
+        }
+
         public void Update(FuelEntry fuelEntry)
         {
             _dbContext.FuelEntries.Update(fuelEntry);
