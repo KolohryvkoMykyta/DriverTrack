@@ -18,7 +18,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Queries.GetRoutesByDrive
 
         public async Task<List<RouteEntryDto>> Handle(GetRoutesQuery request, CancellationToken cancellationToken)
         {
-            var routes = await _repository.GetWithFiltersAsync(request.DriverId, request.FromDate, request.ToDate, cancellationToken);
+            var routes = await _repository.GetWithFiltersAsync(request.DriverId, request.VehicleId, request.FromDate, request.ToDate, cancellationToken);
 
             return _mapper.Map<List<RouteEntryDto>>(routes);
         }

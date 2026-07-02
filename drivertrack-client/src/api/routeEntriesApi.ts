@@ -5,16 +5,14 @@ export type RouteEntry = {
   driverId: string;
   vehicleId: string;
   routeTypeId: string;
-
   startDate: string;
-  endDate: string | null;
-
   startOdometer: number;
-  endOdometer: number;
-
-  totalDistance: number;
-  fuelUsed: number;
-  earnings: number;
+  endDate: string | null;
+  endOdometer: number | null;
+  totalDistance: number | null;
+  fuelUsed: number | null;
+  driverPayment: number;
+  revenue: number;
 };
 
 export async function getRouteEntries(): Promise<RouteEntry[]> {
@@ -51,6 +49,16 @@ export async function createFullRoute(
     "/RouteEntries",
     request
   );
+
+  return response.data;
+}
+
+export async function getRouteEntriesByVehicleId(
+  vehicleId: string
+): Promise<RouteEntry[]> {
+  const response = await apiClient.get<RouteEntry[]>("/RouteEntries", {
+    params: { vehicleId },
+  });
 
   return response.data;
 }

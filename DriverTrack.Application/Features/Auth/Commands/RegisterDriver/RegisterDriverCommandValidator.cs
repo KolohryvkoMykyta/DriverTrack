@@ -24,12 +24,16 @@ namespace DriverTrack.Application.Features.Auth.Commands.RegisterDriver
             RuleFor(x => x.Email)
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty()
-                .EmailAddress();
+                .WithMessage("Email є обов'язковим.")
+                .EmailAddress()
+                .WithMessage("Email має некоректний формат.");
 
             RuleFor(x => x.Password)
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty()
-                .MinimumLength(4);
+                .WithMessage("Пароль є обов'язковим.")
+                .MinimumLength(4)
+                .WithMessage("Пароль має містити щонайменше 4 символи.");
         }
     }
 }

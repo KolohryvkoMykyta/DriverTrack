@@ -10,7 +10,7 @@ namespace DriverTrack.Application.Features.Drivers.Commands.Update
         {
             RuleFor(x => x.Id)
                .NotEmpty()
-               .WithMessage("Driver id is required.");
+               .WithMessage("Ідентифікатор водія є обов'язковим.");
 
             RuleFor(x => x.Name)
                 .Cascade(CascadeMode.Stop)

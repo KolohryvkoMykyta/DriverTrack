@@ -10,23 +10,23 @@ namespace DriverTrack.Application.Features.Vehicles.Commands.CreateVehicle
             RuleFor(x => x.Brand)
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty()
-                .WithMessage("Brand is required.")
+                .WithMessage("Марка автомобіля є обов'язковою.")
                 .MaximumLength(VehicleValidationConstants.BrandMaxLength)
-                .WithMessage($"Brand must be at most {VehicleValidationConstants.BrandMaxLength} characters.");
+                .WithMessage($"Марка автомобіля не може перевищувати {VehicleValidationConstants.BrandMaxLength} символів.");
 
             RuleFor(x => x.Model)
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty()
-                .WithMessage("Model is required.")
+                .WithMessage("Модель автомобіля є обов'язковою.")
                 .MaximumLength(VehicleValidationConstants.ModelMaxLength)
-                .WithMessage($"Model must be at most {VehicleValidationConstants.ModelMaxLength} characters.");
+                .WithMessage($"Модель автомобіля не може перевищувати {VehicleValidationConstants.ModelMaxLength} символів.");
 
             RuleFor(x => x.LicensePlate)
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty()
-                .WithMessage("License plate is required.")
+                .WithMessage("Державний номер є обов'язковим.")
                 .MaximumLength(VehicleValidationConstants.LicensePlateMaxLength)
-                .WithMessage($"License plate must be at most {VehicleValidationConstants.LicensePlateMaxLength} characters.");
+                .WithMessage($"Державний номер не може перевищувати {VehicleValidationConstants.LicensePlateMaxLength} символів.");
         }
     }
 }

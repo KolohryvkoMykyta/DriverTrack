@@ -10,7 +10,6 @@ function AdminDriversTab() {
   const navigate = useNavigate();
 
   const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
   const [showInactive, setShowInactive] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -58,7 +57,6 @@ function AdminDriversTab() {
       setPhoneNumber("");
       setEmail("");
       setPassword("");
-
       setShowCreateForm(false);
 
       await loadDrivers();
@@ -67,17 +65,13 @@ function AdminDriversTab() {
       const backendErrors = error.response?.data?.Errors;
 
       if (backendErrors) {
-        const messages = Object.values(backendErrors)
-          .flat()
-          .join(" ");
-
+        const messages = Object.values(backendErrors).flat().join(" ");
         setErrorMessage(messages);
-
         return;
       }
 
       setErrorMessage(
-        backendMessage ?? "Unexpected error while creating driver."
+        backendMessage ?? "Не вдалося створити водія."
       );
     }
   }
@@ -87,39 +81,35 @@ function AdminDriversTab() {
   }
 
   const activeDrivers = drivers.filter((driver) => driver.isActive);
-
-  const inactiveDrivers = drivers.filter(
-    (driver) => !driver.isActive
-  );
+  const inactiveDrivers = drivers.filter((driver) => !driver.isActive);
 
   if (isLoading) {
-    return <p>Loading drivers...</p>;
+    return <p>Завантаження водіїв...</p>;
   }
 
   return (
     <div>
-      <h2>Drivers</h2>
+      <h2>Водії</h2>
 
       <div>
         <button onClick={() => setShowCreateForm(!showCreateForm)}>
-          {showCreateForm ? "Cancel" : "Add driver"}
+          {showCreateForm ? "Скасувати" : "Додати водія"}
         </button>
 
         <button onClick={() => setShowInactive(!showInactive)}>
           {showInactive
-            ? "Hide inactive drivers"
-            : "Show inactive drivers"}
+            ? "Приховати неактивних водіїв"
+            : "Показати неактивних водіїв"}
         </button>
       </div>
 
       {showCreateForm && (
         <form onSubmit={handleCreateDriver}>
-          <h3>Create driver</h3>
+          <h3>Створення водія</h3>
 
           <div>
-            <label>Name</label>
+            <label>Ім’я</label>
             <br />
-
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -127,21 +117,17 @@ function AdminDriversTab() {
           </div>
 
           <div>
-            <label>Phone number</label>
+            <label>Телефон</label>
             <br />
-
             <input
               value={phoneNumber}
-              onChange={(event) =>
-                setPhoneNumber(event.target.value)
-              }
+              onChange={(event) => setPhoneNumber(event.target.value)}
             />
           </div>
 
           <div>
             <label>Email</label>
             <br />
-
             <input
               type="email"
               value={email}
@@ -150,9 +136,8 @@ function AdminDriversTab() {
           </div>
 
           <div>
-            <label>Password</label>
+            <label>Пароль</label>
             <br />
-
             <input
               type="password"
               value={password}
@@ -160,21 +145,15 @@ function AdminDriversTab() {
             />
           </div>
 
-          {errorMessage && (
-            <p style={{ color: "red" }}>
-              {errorMessage}
-            </p>
-          )}
+          {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
 
-          <button type="submit">Create</button>
+          <button type="submit">Створити</button>
         </form>
       )}
 
-      <h3>Active drivers</h3>
+      <h3>Активні водії</h3>
 
-      {activeDrivers.length === 0 && (
-        <p>No active drivers found.</p>
-      )}
+      {activeDrivers.length === 0 && <p>Активних водіїв не знайдено.</p>}
 
       <div>
         {activeDrivers.map((driver) => (
@@ -188,10 +167,10 @@ function AdminDriversTab() {
 
       {showInactive && (
         <>
-          <h3>Inactive drivers</h3>
+          <h3>Неактивні водії</h3>
 
           {inactiveDrivers.length === 0 && (
-            <p>No inactive drivers found.</p>
+            <p>Неактивних водіїв не знайдено.</p>
           )}
 
           <div>
@@ -204,27 +183,6 @@ function AdminDriversTab() {
             ))}
           </div>
         </>
-      )}
-
-      {selectedDriver && (
-        <div>
-          <hr />
-
-          <h3>Selected driver</h3>
-
-          <p>Id: {selectedDriver.id}</p>
-
-          <p>Name: {selectedDriver.name}</p>
-
-          <p>Phone: {selectedDriver.phoneNumber}</p>
-
-          <p>
-            Status:{" "}
-            {selectedDriver.isActive
-              ? "Active"
-              : "Inactive"}
-          </p>
-        </div>
       )}
     </div>
   );

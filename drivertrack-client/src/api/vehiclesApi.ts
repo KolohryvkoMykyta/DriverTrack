@@ -43,3 +43,24 @@ export async function createVehicle(
 
   return response.data;
 }
+
+export type UpdateVehicleRequest = {
+  brand: string;
+  model: string;
+  licensePlate: string;
+  isActive: boolean;
+  driverId: string | null;
+};
+
+export async function getVehicleById(id: string): Promise<Vehicle> {
+  const response = await apiClient.get<Vehicle>(`/Vehicles/${id}`);
+
+  return response.data;
+}
+
+export async function updateVehicle(
+  id: string,
+  request: UpdateVehicleRequest
+): Promise<void> {
+  await apiClient.put(`/Vehicles/${id}`, request);
+}

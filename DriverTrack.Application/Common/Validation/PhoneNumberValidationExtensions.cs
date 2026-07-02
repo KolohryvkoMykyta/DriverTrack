@@ -20,9 +20,9 @@ namespace DriverTrack.Application.Common.Validation
             string defaultRegion)
         {
             return ruleBuilder
-                    .NotEmpty().WithMessage("Phone number is required.")
-                    .MaximumLength(maxLength).WithMessage($"Phone number must be at most {maxLength} characters.")
-                    .ValidPhoneNumber(defaultRegion).WithMessage("Invalid phone number format. Please provide a valid international phone number.");
+                    .NotEmpty().WithMessage("Телефон є обов'язковим.")
+                    .MaximumLength(maxLength).WithMessage($"Номер телефону має містити щонайбільше {maxLength} символів.")
+                    .ValidPhoneNumber(defaultRegion).WithMessage("Невірний формат номера телефону. Будь ласка, вкажіть дійсний міжнародний номер телефону.");
         }
 
         private static bool IsValidPhoneNumber(string? phone, string defaultRegion)

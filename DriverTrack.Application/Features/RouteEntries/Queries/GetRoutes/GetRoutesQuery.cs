@@ -5,6 +5,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Queries.GetRoutesByDrive
 {
     public record GetRoutesQuery(
         Guid? DriverId,
+        Guid? VehicleId,
         DateTime? FromDate,
         DateTime? ToDate
     ) : IRequest<List<RouteEntryDto>>;

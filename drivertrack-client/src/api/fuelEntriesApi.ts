@@ -41,3 +41,13 @@ export async function createFuelEntry(
 
   return response.data;
 }
+
+export async function getFuelEntriesByVehicleId(
+  vehicleId: string
+): Promise<FuelEntry[]> {
+  const response = await apiClient.get<FuelEntry[]>("/FuelEntries", {
+    params: { vehicleId },
+  });
+
+  return response.data;
+}

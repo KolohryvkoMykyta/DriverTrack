@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
+import { getDrivers, type Driver } from "../../api/driversApi";
 import {
-  getDriverById,
-  updateDriver,
-  type Driver,
-} from "../../api/driversApi";
-import {
-  getVehiclesByDriverId,
+  getVehicleById,
+  updateVehicle,
   type Vehicle,
 } from "../../api/vehiclesApi";
 import {
-  getRouteEntriesByDriverId,
+  getRouteEntriesByVehicleId,
   type RouteEntry,
 } from "../../api/routeEntriesApi";
 import {
-  getFuelEntriesByDriverId,
+  getFuelEntriesByVehicleId,
   type FuelEntry,
 } from "../../api/fuelEntriesApi";
 import { getApiErrorMessage } from "../../api/apiErrorHandler";
@@ -24,25 +20,23 @@ import { getApiErrorMessage } from "../../api/apiErrorHandler";
 const ROUTES_PAGE_SIZE = 5;
 const FUEL_PAGE_SIZE = 5;
 
-type DetailsTab = "vehicles" | "routes" | "fuel";
+type DetailsTab = "routes" | "fuel";
 type PeriodMode = "week" | "month" | "all" | "custom";
 
-function DriverDetailsPage() {
-  const { driverId } = useParams();
+function VehicleDetailsPage() {
+  const { vehicleId } = useParams();
   const navigate = useNavigate();
 
-  const [driver, setDriver] = useState<Driver | null>(null);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [routeEntries, setRouteEntries] = useState<RouteEntry[]>([]);
   const [fuelEntries, setFuelEntries] = useState<FuelEntry[]>([]);
 
-  const [detailsTab, setDetailsTab] = useState<DetailsTab>("vehicles");
+  const [detailsTab, setDetailsTab] = useState<DetailsTab>("routes");
   const [periodMode, setPeriodMode] = useState<PeriodMode>("month");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("all");
-  const [selectedFuelVehicleId, setSelectedFuelVehicleId] = useState<string>("all");
   const [routesPage, setRoutesPage] = useState(1);
   const [fuelPage, setFuelPage] = useState(1);
 
@@ -50,48 +44,48 @@ function DriverDetailsPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editPhoneNumber, setEditPhoneNumber] = useState("");
+  const [editBrand, setEditBrand] = useState("");
+  const [editModel, setEditModel] = useState("");
+  const [editLicensePlate, setEditLicensePlate] = useState("");
   const [editIsActive, setEditIsActive] = useState(true);
+  const [editDriverId, setEditDriverId] = useState("");
   const [editErrorMessage, setEditErrorMessage] = useState("");
 
-  async function loadDriverDetails() {
+  async function loadVehicleDetails() {
     try {
       setIsLoading(true);
       setErrorMessage("");
 
-      if (!driverId) {
-        setErrorMessage("Ідентифікатор водія відсутній.");
+      if (!vehicleId) {
+        setErrorMessage("Ідентифікатор автомобіля відсутній.");
         return;
       }
 
-      const [driverData, vehiclesData, routesData, fuelData] =
+      const [vehicleData, driversData, routesData, fuelData] =
         await Promise.all([
-          getDriverById(driverId),
-          getVehiclesByDriverId(driverId),
-          getRouteEntriesByDriverId(driverId),
-          getFuelEntriesByDriverId(driverId),
+          getVehicleById(vehicleId),
+          getDrivers(),
+          getRouteEntriesByVehicleId(vehicleId),
+          getFuelEntriesByVehicleId(vehicleId),
         ]);
 
-      setDriver(driverData);
-      setVehicles(vehiclesData);
+      setVehicle(vehicleData);
+      setDrivers(driversData);
       setRouteEntries(routesData);
       setFuelEntries(fuelData);
-      setSelectedVehicleId("all");
-      setSelectedFuelVehicleId("all");
       setRoutesPage(1);
       setFuelPage(1);
     } catch (error) {
-      console.error("Failed to load driver details:", error);
-      setErrorMessage("Не вдалося завантажити деталі водія.");
+      console.error("Failed to load vehicle details:", error);
+      setErrorMessage("Не вдалося завантажити деталі автомобіля.");
     } finally {
       setIsLoading(false);
     }
   }
 
   useEffect(() => {
-    loadDriverDetails();
-  }, [driverId]);
+    loadVehicleDetails();
+  }, [vehicleId]);
 
   function getDateString(date: Date) {
     return date.toISOString().split("T")[0];
@@ -163,14 +157,26 @@ function DriverDetailsPage() {
     setFuelPage(1);
   }
 
+  function getDriverName(driverId: string | null) {
+    if (!driverId) {
+      return "Не призначено";
+    }
+
+    const driver = drivers.find((driver) => driver.id === driverId);
+
+    return driver?.name ?? "Невідомий водій";
+  }
+
   function startEditing() {
-    if (!driver) {
+    if (!vehicle) {
       return;
     }
 
-    setEditName(driver.name);
-    setEditPhoneNumber(driver.phoneNumber);
-    setEditIsActive(driver.isActive);
+    setEditBrand(vehicle.brand);
+    setEditModel(vehicle.model);
+    setEditLicensePlate(vehicle.licensePlate);
+    setEditIsActive(vehicle.isActive);
+    setEditDriverId(vehicle.driverId ?? "");
     setEditErrorMessage("");
     setIsEditing(true);
   }
@@ -180,25 +186,26 @@ function DriverDetailsPage() {
     setEditErrorMessage("");
   }
 
-  async function handleUpdateDriver(event: React.FormEvent) {
+  async function handleUpdateVehicle(event: React.FormEvent) {
     event.preventDefault();
 
-    if (!driver) {
+    if (!vehicle) {
       return;
     }
 
     try {
       setEditErrorMessage("");
 
-      await updateDriver(driver.id, {
-        name: editName,
-        phoneNumber: editPhoneNumber,
+      await updateVehicle(vehicle.id, {
+        brand: editBrand,
+        model: editModel,
+        licensePlate: editLicensePlate,
         isActive: editIsActive,
+        driverId: editDriverId || null,
       });
 
-      const updatedDriver = await getDriverById(driver.id);
-      setDriver(updatedDriver);
-
+      const updatedVehicle = await getVehicleById(vehicle.id);
+      setVehicle(updatedVehicle);
       setIsEditing(false);
     } catch (error) {
       setEditErrorMessage(getApiErrorMessage(error));
@@ -221,24 +228,6 @@ function DriverDetailsPage() {
     return value.toFixed(2);
   }
 
-  function formatMoney(value: number | null | undefined) {
-    if (value === null || value === undefined) {
-      return "0.00 грн";
-    }
-
-    return `${value.toFixed(2)} грн`;
-  }
-
-  function getVehicleName(vehicleId: string) {
-    const vehicle = vehicles.find((vehicle) => vehicle.id === vehicleId);
-
-    if (!vehicle) {
-      return "Невідомий автомобіль";
-    }
-
-    return `${vehicle.brand} ${vehicle.model} — ${vehicle.licensePlate}`;
-  }
-
   function getPeriodButtonStyle(mode: PeriodMode) {
     return {
       fontWeight: periodMode === mode ? "bold" : "normal",
@@ -252,29 +241,23 @@ function DriverDetailsPage() {
   }
 
   if (isLoading) {
-    return <p>Завантаження деталей водія...</p>;
+    return <p>Завантаження деталей автомобіля...</p>;
   }
 
   if (errorMessage) {
     return (
       <div>
-        <button onClick={() => navigate(-1)}>
-          ← Назад
-        </button>
-
+        <button onClick={() => navigate(-1)}>← Назад</button>
         <p style={{ color: "red" }}>{errorMessage}</p>
       </div>
     );
   }
 
-  if (!driver) {
+  if (!vehicle) {
     return (
       <div>
-        <button onClick={() => navigate(-1)}>
-          ← Назад
-        </button>
-
-        <p>Водія не знайдено.</p>
+        <button onClick={() => navigate(-1)}>← Назад</button>
+        <p>Автомобіль не знайдено.</p>
       </div>
     );
   }
@@ -292,75 +275,69 @@ function DriverDetailsPage() {
     (sum, route) => sum + (route.totalDistance ?? 0),
     0
   );
-  const summaryRevenue = periodRouteEntries.reduce(
-    (sum, route) => sum + route.revenue,
-    0
-  );
-  const summaryDriverPayment = periodRouteEntries.reduce(
-    (sum, route) => sum + route.driverPayment,
+  const summaryFuelUsed = periodRouteEntries.reduce(
+    (sum, route) => sum + (route.fuelUsed ?? 0),
     0
   );
 
-  const filteredRouteEntries =
-  selectedVehicleId === "all"
-    ? periodRouteEntries
-    : periodRouteEntries.filter(
-        (route) => route.vehicleId === selectedVehicleId
-      );
+const summaryAverageFuelConsumption = summaryDistance > 0 ? (summaryFuelUsed / summaryDistance) * 100 : null;
 
-const sortedRouteEntries = [...filteredRouteEntries].sort(
-  (a, b) =>
-    new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-);
+  const sortedRouteEntries = [...periodRouteEntries].sort(
+    (a, b) =>
+      new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+  );
 
-const totalRoutePages = Math.ceil(
-  sortedRouteEntries.length / ROUTES_PAGE_SIZE
-);
+  const totalRoutePages = Math.ceil(
+    sortedRouteEntries.length / ROUTES_PAGE_SIZE
+  );
 
-const pagedRouteEntries = sortedRouteEntries.slice(
-  (routesPage - 1) * ROUTES_PAGE_SIZE,
-  routesPage * ROUTES_PAGE_SIZE
-);
+  const pagedRouteEntries = sortedRouteEntries.slice(
+    (routesPage - 1) * ROUTES_PAGE_SIZE,
+    routesPage * ROUTES_PAGE_SIZE
+  );
 
-const filteredFuelEntries =
-  selectedFuelVehicleId === "all"
-    ? periodFuelEntries
-    : periodFuelEntries.filter(
-        (fuel) => fuel.vehicleId === selectedFuelVehicleId
-      );
+  const sortedFuelEntries = [...periodFuelEntries].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 
-const sortedFuelEntries = [...filteredFuelEntries].sort(
-  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-);
+  const totalFuelPages = Math.ceil(sortedFuelEntries.length / FUEL_PAGE_SIZE);
 
-const totalFuelPages = Math.ceil(
-  sortedFuelEntries.length / FUEL_PAGE_SIZE
-);
-
-const pagedFuelEntries = sortedFuelEntries.slice(
-  (fuelPage - 1) * FUEL_PAGE_SIZE,
-  fuelPage * FUEL_PAGE_SIZE
-);
+  const pagedFuelEntries = sortedFuelEntries.slice(
+    (fuelPage - 1) * FUEL_PAGE_SIZE,
+    fuelPage * FUEL_PAGE_SIZE
+  );
 
   return (
     <div>
-      <button onClick={() => navigate(-1)}>
-        ← Назад
-      </button>
+      <button onClick={() => navigate(-1)}>← Назад</button>
 
-      <h2>Деталі водія</h2>
+      <h2>Деталі автомобіля</h2>
 
       {!isEditing && (
         <div>
-          <h3>{driver.name}</h3>
+          <h3>
+            {vehicle.brand} {vehicle.model}
+          </h3>
 
           <p>
-            <strong>Телефон:</strong> {driver.phoneNumber}
+            <strong>Номер:</strong> {vehicle.licensePlate}
           </p>
 
           <p>
             <strong>Статус:</strong>{" "}
-            {driver.isActive ? "Активний" : "Неактивний"}
+            {vehicle.isActive ? "Активний" : "Неактивний"}
+          </p>
+
+          <p>
+            <strong>Водій:</strong> {getDriverName(vehicle.driverId)}
+          </p>
+
+          <p>
+            <strong>Середня витрата пального:</strong>{" "}
+            {vehicle.averageFuelConsumption === null ||
+            vehicle.averageFuelConsumption === undefined
+              ? "Немає даних"
+              : `${vehicle.averageFuelConsumption} л / 100 км`}
           </p>
 
           <button type="button" onClick={startEditing}>
@@ -370,24 +347,33 @@ const pagedFuelEntries = sortedFuelEntries.slice(
       )}
 
       {isEditing && (
-        <form onSubmit={handleUpdateDriver}>
-          <h3>Редагування водія</h3>
+        <form onSubmit={handleUpdateVehicle}>
+          <h3>Редагування автомобіля</h3>
 
           <div>
-            <label>Ім’я</label>
+            <label>Марка</label>
             <br />
             <input
-              value={editName}
-              onChange={(event) => setEditName(event.target.value)}
+              value={editBrand}
+              onChange={(event) => setEditBrand(event.target.value)}
             />
           </div>
 
           <div>
-            <label>Телефон</label>
+            <label>Модель</label>
             <br />
             <input
-              value={editPhoneNumber}
-              onChange={(event) => setEditPhoneNumber(event.target.value)}
+              value={editModel}
+              onChange={(event) => setEditModel(event.target.value)}
+            />
+          </div>
+
+          <div>
+            <label>Номер</label>
+            <br />
+            <input
+              value={editLicensePlate}
+              onChange={(event) => setEditLicensePlate(event.target.value)}
             />
           </div>
 
@@ -402,6 +388,23 @@ const pagedFuelEntries = sortedFuelEntries.slice(
             >
               <option value="active">Активний</option>
               <option value="inactive">Неактивний</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Водій</label>
+            <br />
+            <select
+              value={editDriverId}
+              onChange={(event) => setEditDriverId(event.target.value)}
+            >
+              <option value="">Не призначено</option>
+
+              {drivers.map((driver) => (
+                <option key={driver.id} value={driver.id}>
+                  {driver.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -494,28 +497,25 @@ const pagedFuelEntries = sortedFuelEntries.slice(
         </div>
 
         <div>
-          <h4>Дохід компанії</h4>
-          <p>{formatMoney(summaryRevenue)}</p>
+            <h4>Витрачено пального</h4>
+            <p>{formatNumber(summaryFuelUsed)} л</p>
         </div>
 
         <div>
-          <h4>Зарплата водія</h4>
-          <p>{formatMoney(summaryDriverPayment)}</p>
+            <h4>Середня витрата</h4>
+            <p>
+                {summaryAverageFuelConsumption === null
+                ? "Немає даних"
+                : `${summaryAverageFuelConsumption.toFixed(2)} л / 100 км`}
+            </p>
         </div>
       </div>
 
       <hr />
 
-      <h3>Дані водія</h3>
+      <h3>Дані автомобіля</h3>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-        <button
-          style={getDetailsTabButtonStyle("vehicles")}
-          onClick={() => setDetailsTab("vehicles")}
-        >
-          Автомобілі
-        </button>
-
         <button
           style={getDetailsTabButtonStyle("routes")}
           onClick={() => setDetailsTab("routes")}
@@ -531,76 +531,11 @@ const pagedFuelEntries = sortedFuelEntries.slice(
         </button>
       </div>
 
-      {detailsTab === "vehicles" && (
-        <>
-          <h3>Призначені автомобілі</h3>
-
-          {vehicles.length === 0 && (
-            <p>До цього водія не призначено автомобілів.</p>
-          )}
-
-          {vehicles.map((vehicle) => (
-            <div
-              key={vehicle.id}
-              style={{
-                border: "1px solid #ccc",
-                padding: "12px",
-                marginBottom: "8px",
-              }}
-            >
-              <strong>
-                {vehicle.brand} {vehicle.model}
-              </strong>
-
-              <p>Номер: {vehicle.licensePlate}</p>
-
-              <p>Статус: {vehicle.isActive ? "Активний" : "Неактивний"}</p>
-
-              <p>
-                Середня витрата пального:{" "}
-                {vehicle.averageFuelConsumption === null ||
-                vehicle.averageFuelConsumption === undefined
-                  ? "Немає даних"
-                  : `${vehicle.averageFuelConsumption} л / 100 км`}
-              </p>
-            </div>
-          ))}
-        </>
-      )}
-
       {detailsTab === "routes" && (
         <>
           <h3>Маршрути</h3>
 
-          <div style={{ marginBottom: "16px" }}>
-            <h4>Фільтр маршрутів за автомобілем</h4>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedVehicleId("all");
-                setRoutesPage(1);
-              }}
-            >
-              Усі автомобілі
-            </button>
-
-            {vehicles.map((vehicle) => (
-              <button
-                key={vehicle.id}
-                type="button"
-                onClick={() => {
-                  setSelectedVehicleId(vehicle.id);
-                  setRoutesPage(1);
-                }}
-                style={{ marginLeft: "8px" }}
-              >
-                {vehicle.brand} {vehicle.model}
-              </button>
-            ))}
-          </div>
-
-          {filteredRouteEntries.length === 0 && <p>Маршрути не знайдено.</p>}
+          {periodRouteEntries.length === 0 && <p>Маршрути не знайдено.</p>}
 
           {pagedRouteEntries.map((route) => (
             <div
@@ -611,10 +546,6 @@ const pagedFuelEntries = sortedFuelEntries.slice(
                 marginBottom: "8px",
               }}
             >
-              <p>
-                <strong>Автомобіль:</strong> {getVehicleName(route.vehicleId)}
-              </p>
-
               <p>
                 <strong>Дата початку:</strong> {formatDate(route.startDate)}
               </p>
@@ -633,12 +564,13 @@ const pagedFuelEntries = sortedFuelEntries.slice(
               </p>
 
               <p>
-                <strong>Дохід компанії:</strong> {formatMoney(route.revenue)}
+                <strong>Дохід компанії:</strong>{" "}
+                {formatNumber(route.revenue)} грн
               </p>
 
               <p>
                 <strong>Зарплата водія:</strong>{" "}
-                {formatMoney(route.driverPayment)}
+                {formatNumber(route.driverPayment)} грн
               </p>
             </div>
           ))}
@@ -672,35 +604,7 @@ const pagedFuelEntries = sortedFuelEntries.slice(
         <>
           <h3>Заправки</h3>
 
-          <div style={{ marginBottom: "16px" }}>
-            <h4>Фільтр за автомобілем</h4>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedFuelVehicleId("all");
-                setFuelPage(1);
-              }}
-            >
-              Усі автомобілі
-            </button>
-
-            {vehicles.map((vehicle) => (
-              <button
-                key={vehicle.id}
-                type="button"
-                onClick={() => {
-                  setSelectedFuelVehicleId(vehicle.id);
-                  setFuelPage(1);
-                }}
-                style={{ marginLeft: "8px" }}
-              >
-                {vehicle.brand} {vehicle.model}
-              </button>
-            ))}
-          </div>
-
-          {filteredFuelEntries.length === 0 && <p>Заправки не знайдено.</p>}
+          {periodFuelEntries.length === 0 && <p>Заправки не знайдено.</p>}
 
           {pagedFuelEntries.map((fuel) => (
             <div
@@ -713,10 +617,6 @@ const pagedFuelEntries = sortedFuelEntries.slice(
             >
               <p>
                 <strong>Дата:</strong> {formatDate(fuel.date)}
-              </p>
-
-              <p>
-                <strong>Автомобіль:</strong> {getVehicleName(fuel.vehicleId)}
               </p>
 
               <p>
@@ -772,4 +672,4 @@ const pagedFuelEntries = sortedFuelEntries.slice(
   );
 }
 
-export default DriverDetailsPage;
+export default VehicleDetailsPage;

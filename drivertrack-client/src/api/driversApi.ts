@@ -7,6 +7,12 @@ export type Driver = {
   isActive: boolean;
 };
 
+export type UpdateDriverRequest = {
+  name: string;
+  phoneNumber: string;
+  isActive: boolean;
+};
+
 export async function getDrivers(): Promise<Driver[]> {
   const response = await apiClient.get<Driver[]>("/Drivers");
 
@@ -17,4 +23,11 @@ export async function getDriverById(id: string): Promise<Driver> {
   const response = await apiClient.get<Driver>(`/Drivers/${id}`);
 
   return response.data;
+}
+
+export async function updateDriver(
+  id: string,
+  request: UpdateDriverRequest
+): Promise<void> {
+  await apiClient.put(`/Drivers/${id}`, request);
 }

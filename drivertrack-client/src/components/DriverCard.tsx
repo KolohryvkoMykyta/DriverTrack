@@ -17,8 +17,20 @@ function DriverCard({ driver, onClick }: DriverCardProps) {
       }}
     >
       <strong>{driver.name}</strong>
-      <p>Phone: {driver.phoneNumber}</p>
-      <p>Status: {driver.isActive ? "Active" : "Inactive"}</p>
+
+      <p>
+        Телефон:{" "}
+        {driver.phoneNumber?.trim()
+          ? driver.phoneNumber
+          : "Не вказано"}
+      </p>
+
+      <p>
+        Статус:{" "}
+        {driver.isActive
+          ? "Активний"
+          : "Неактивний"}
+      </p>
     </div>
   );
 }
