@@ -4,6 +4,7 @@ import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import DriverDashboardPage from "./pages/DriverDashboardPage";
 import LoginPage from "./pages/LoginPage";
 import VehicleDetailsPage from "./pages/admin/VehicleDetailsPage";
+import RouteDetailsPage from "./pages/admin/RouteDetailsPage";
 
 function App() {
   const token = localStorage.getItem("token");
@@ -66,6 +67,16 @@ function App() {
             ) : (
               <Navigate to="/driver" replace />
             )
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/admin/routes/:routeId"
+        element={
+          token && role === "Admin" ? (
+            <RouteDetailsPage />
           ) : (
             <Navigate to="/login" replace />
           )

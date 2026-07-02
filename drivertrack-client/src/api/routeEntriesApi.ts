@@ -62,3 +62,31 @@ export async function getRouteEntriesByVehicleId(
 
   return response.data;
 }
+
+export type UpdateRouteEntryRequest = {
+  vehicleId: string;
+  routeTypeId: string;
+  startDate: string;
+  startOdometer: number;
+  endDate: string;
+  endOdometer: number;
+  totalDistance: number;
+  driverPayment: number;
+  revenue: number;
+};
+
+export async function getRouteEntryById(id: string): Promise<RouteEntry> {
+  const response = await apiClient.get<RouteEntry>(`/RouteEntries/${id}`);
+  return response.data;
+}
+
+export async function updateRouteEntry(
+  id: string,
+  request: UpdateRouteEntryRequest
+): Promise<void> {
+  await apiClient.put(`/RouteEntries/${id}`, request);
+}
+
+export async function deleteRouteEntry(id: string): Promise<void> {
+  await apiClient.delete(`/RouteEntries/${id}`);
+}

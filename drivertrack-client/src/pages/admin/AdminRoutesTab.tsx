@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { getDrivers, type Driver } from "../../api/driversApi";
 import { getVehicles, type Vehicle } from "../../api/vehiclesApi";
@@ -7,20 +8,21 @@ import {
   getRouteEntries,
   type RouteEntry,
 } from "../../api/routeEntriesApi";
-import {
-  getRouteTypes,
-  type RouteType,
-} from "../../api/routeTypesApi";
+import { getRouteTypes, type RouteType } from "../../api/routeTypesApi";
+import { getApiErrorMessage } from "../../api/apiErrorHandler";
 
 const ROUTES_PAGE_SIZE = 5;
 
 function AdminRoutesTab() {
+  const navigate = useNavigate();
+
   const [routeEntries, setRouteEntries] = useState<RouteEntry[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [routeTypes, setRouteTypes] = useState<RouteType[]>([]);
 
   const [selectedDriverId, setSelectedDriverId] = useState("all");
+  const [selectedVehicleId, setSelectedVehicleId] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -36,15 +38,15 @@ function AdminRoutesTab() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [createErrorMessage, setCreateErrorMessage] = useState("");
 
   async function loadData() {
-    const [routeEntries, drivers, vehicles, routeTypes] =
-      await Promise.all([
-        getRouteEntries(),
-        getDrivers(),
-        getVehicles(),
-        getRouteTypes(),
-      ]);
+    const [routeEntries, drivers, vehicles, routeTypes] = await Promise.all([
+      getRouteEntries(),
+      getDrivers(),
+      getVehicles(),
+      getRouteTypes(),
+    ]);
 
     setRouteEntries(routeEntries);
     setDrivers(drivers);
@@ -61,7 +63,7 @@ function AdminRoutesTab() {
         await loadData();
       } catch (error) {
         console.error("Failed to load routes:", error);
-        setErrorMessage("Failed to load routes.");
+        setErrorMessage("Не вдалося завантажити маршрути.");
       } finally {
         setIsLoading(false);
       }
@@ -92,9 +94,11 @@ function AdminRoutesTab() {
       !newEndOdometer ||
       !newTotalDistance
     ) {
-      alert("Please fill all route fields.");
+      setCreateErrorMessage("Заповніть усі поля маршруту.");
       return;
     }
+
+    setCreateErrorMessage("");
 
     try {
       await createFullRoute({
@@ -123,20 +127,20 @@ function AdminRoutesTab() {
       await loadData();
     } catch (error) {
       console.error("Failed to create route:", error);
-      alert("Failed to create route.");
+      setCreateErrorMessage(getApiErrorMessage(error));
     }
   }
 
   const getDriverName = (driverId: string) => {
     const driver = drivers.find((driver) => driver.id === driverId);
-    return driver?.name ?? "Unknown driver";
+    return driver?.name ?? "Невідомий водій";
   };
 
   const getVehicleName = (vehicleId: string) => {
     const vehicle = vehicles.find((vehicle) => vehicle.id === vehicleId);
 
     if (!vehicle) {
-      return "Unknown vehicle";
+      return "Невідомий автомобіль";
     }
 
     return `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})`;
@@ -147,33 +151,42 @@ function AdminRoutesTab() {
       (routeType) => routeType.id === routeTypeId
     );
 
-    return routeType?.name ?? "Unknown route type";
+    return routeType?.name ?? "Невідомий тип маршруту";
   };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) {
-      return "Not closed";
+      return "Не завершено";
     }
 
-    return new Date(dateString).toLocaleString();
+    return new Date(dateString).toLocaleString("uk-UA");
   };
 
-  const filteredRouteEntries =
+  const filteredVehiclesForFilter =
     selectedDriverId === "all"
-      ? routeEntries
-      : routeEntries.filter(
-          (route) => route.driverId === selectedDriverId
-        );
+      ? vehicles
+      : vehicles.filter((vehicle) => vehicle.driverId === selectedDriverId);
+
+  const filteredVehiclesForCreate = newDriverId
+    ? vehicles.filter((vehicle) => vehicle.driverId === newDriverId)
+    : vehicles;
+
+  const filteredRouteEntries = routeEntries.filter((route) => {
+    const matchesDriver =
+      selectedDriverId === "all" || route.driverId === selectedDriverId;
+
+    const matchesVehicle =
+      selectedVehicleId === "all" || route.vehicleId === selectedVehicleId;
+
+    return matchesDriver && matchesVehicle;
+  });
 
   const sortedRouteEntries = [...filteredRouteEntries].sort(
     (a, b) =>
-      new Date(b.startDate).getTime() -
-      new Date(a.startDate).getTime()
+      new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
   );
 
-  const totalPages = Math.ceil(
-    sortedRouteEntries.length / ROUTES_PAGE_SIZE
-  );
+  const totalPages = Math.ceil(sortedRouteEntries.length / ROUTES_PAGE_SIZE);
 
   const pagedRouteEntries = sortedRouteEntries.slice(
     (currentPage - 1) * ROUTES_PAGE_SIZE,
@@ -181,16 +194,18 @@ function AdminRoutesTab() {
   );
 
   if (isLoading) {
-    return <p>Loading routes...</p>;
+    return <p>Завантаження маршрутів...</p>;
   }
 
   return (
     <div>
-      <h2>Routes</h2>
+      <h2>Маршрути</h2>
 
       {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
 
-      <button onClick={() => setShowCreateForm(true)}>Add Route</button>
+      <button onClick={() => setShowCreateForm(true)}>
+        Додати маршрут
+      </button>
 
       {showCreateForm && (
         <div
@@ -201,14 +216,18 @@ function AdminRoutesTab() {
             marginBottom: "12px",
           }}
         >
-          <h3>Create route</h3>
+          <h3>Створення маршруту</h3>
 
-          <p>Driver</p>
+          <p>Водій</p>
           <select
             value={newDriverId}
-            onChange={(e) => setNewDriverId(e.target.value)}
+            onChange={(e) => {
+              setNewDriverId(e.target.value);
+              setNewVehicleId("");
+              setCreateErrorMessage("");
+            }}
           >
-            <option value="">Select driver</option>
+            <option value="">Оберіть водія</option>
             {drivers.map((driver) => (
               <option key={driver.id} value={driver.id}>
                 {driver.name}
@@ -216,25 +235,31 @@ function AdminRoutesTab() {
             ))}
           </select>
 
-          <p>Vehicle</p>
+          <p>Автомобіль</p>
           <select
             value={newVehicleId}
-            onChange={(e) => setNewVehicleId(e.target.value)}
+            onChange={(e) => {
+              setNewVehicleId(e.target.value);
+              setCreateErrorMessage("");
+            }}
           >
-            <option value="">Select vehicle</option>
-            {vehicles.map((vehicle) => (
+            <option value="">Оберіть автомобіль</option>
+            {filteredVehiclesForCreate.map((vehicle) => (
               <option key={vehicle.id} value={vehicle.id}>
                 {vehicle.brand} {vehicle.model} ({vehicle.licensePlate})
               </option>
             ))}
           </select>
 
-          <p>Route type</p>
+          <p>Тип маршруту</p>
           <select
             value={newRouteTypeId}
-            onChange={(e) => setNewRouteTypeId(e.target.value)}
+            onChange={(e) => {
+              setNewRouteTypeId(e.target.value);
+              setCreateErrorMessage("");
+            }}
           >
-            <option value="">Select route type</option>
+            <option value="">Оберіть тип маршруту</option>
             {routeTypes.map((routeType) => (
               <option key={routeType.id} value={routeType.id}>
                 {routeType.name}
@@ -242,72 +267,92 @@ function AdminRoutesTab() {
             ))}
           </select>
 
-          <p>Start date</p>
+          <p>Дата початку</p>
           <input
             type="datetime-local"
             value={newStartDate}
-            onChange={(e) => setNewStartDate(e.target.value)}
+            onChange={(e) => {
+              setNewStartDate(e.target.value);
+              setCreateErrorMessage("");
+            }}
           />
 
-          <p>End date</p>
+          <p>Дата завершення</p>
           <input
             type="datetime-local"
             value={newEndDate}
-            onChange={(e) => setNewEndDate(e.target.value)}
+            onChange={(e) => {
+              setNewEndDate(e.target.value);
+              setCreateErrorMessage("");
+            }}
           />
 
-          <p>Start odometer</p>
+          <p>Початковий одометр</p>
           <input
             type="number"
             value={newStartOdometer}
             onChange={(e) => {
               setNewStartOdometer(e.target.value);
               updateTotalDistance(e.target.value, newEndOdometer);
+              setCreateErrorMessage("");
             }}
           />
 
-          <p>End odometer</p>
+          <p>Кінцевий одометр</p>
           <input
             type="number"
             value={newEndOdometer}
             onChange={(e) => {
               setNewEndOdometer(e.target.value);
               updateTotalDistance(newStartOdometer, e.target.value);
+              setCreateErrorMessage("");
             }}
           />
 
-          <p>Total distance</p>
+          <p>Загальна відстань</p>
           <input
             type="number"
             value={newTotalDistance}
-            onChange={(e) => setNewTotalDistance(e.target.value)}
+            onChange={(e) => {
+              setNewTotalDistance(e.target.value);
+              setCreateErrorMessage("");
+            }}
           />
 
-          <br />
+          {createErrorMessage && (
+            <p style={{ color: "red", whiteSpace: "pre-line" }}>
+              {createErrorMessage}
+            </p>
+          )}
+
           <br />
 
-          <button onClick={handleCreateRoute}>Create</button>
+          <button onClick={handleCreateRoute}>Створити</button>
 
           <button
-            onClick={() => setShowCreateForm(false)}
+            onClick={() => {
+              setShowCreateForm(false);
+              setCreateErrorMessage("");
+            }}
             style={{ marginLeft: "8px" }}
           >
-            Cancel
+            Скасувати
           </button>
         </div>
       )}
 
       <div style={{ marginBottom: "16px", marginTop: "16px" }}>
         <label>
-          Filter by driver:{" "}
+          Фільтр за водієм:{" "}
           <select
             value={selectedDriverId}
             onChange={(e) => {
               setSelectedDriverId(e.target.value);
+              setSelectedVehicleId("all");
               setCurrentPage(1);
             }}
           >
-            <option value="all">All drivers</option>
+            <option value="all">Усі водії</option>
             {drivers.map((driver) => (
               <option key={driver.id} value={driver.id}>
                 {driver.name}
@@ -315,52 +360,72 @@ function AdminRoutesTab() {
             ))}
           </select>
         </label>
+
+        <label style={{ marginLeft: "12px" }}>
+          Фільтр за автомобілем:{" "}
+          <select
+            value={selectedVehicleId}
+            onChange={(e) => {
+              setSelectedVehicleId(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="all">Усі автомобілі</option>
+            {filteredVehiclesForFilter.map((vehicle) => (
+              <option key={vehicle.id} value={vehicle.id}>
+                {vehicle.brand} {vehicle.model} ({vehicle.licensePlate})
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      {sortedRouteEntries.length === 0 && <p>No routes found.</p>}
+      {sortedRouteEntries.length === 0 && <p>Маршрути не знайдено.</p>}
 
       {pagedRouteEntries.map((route) => (
         <div
           key={route.id}
+          onClick={() => navigate(`/admin/routes/${route.id}`)}
           style={{
             border: "1px solid #ccc",
             padding: "12px",
             marginBottom: "8px",
+            cursor: "pointer",
           }}
         >
           <p>
-            <strong>Driver:</strong> {getDriverName(route.driverId)}
+            <strong>{formatDate(route.startDate)}</strong>
           </p>
+
           <p>
-            <strong>Vehicle:</strong> {getVehicleName(route.vehicleId)}
+            <strong>Водій:</strong> {getDriverName(route.driverId)}
           </p>
+
           <p>
-            <strong>Route type:</strong>{" "}
+            <strong>Автомобіль:</strong> {getVehicleName(route.vehicleId)}
+          </p>
+
+          <p>
+            <strong>Тип маршруту:</strong>{" "}
             {getRouteTypeName(route.routeTypeId)}
           </p>
+
           <p>
-            <strong>Start date:</strong> {formatDate(route.startDate)}
+            <strong>Відстань:</strong>{" "}
+            {route.totalDistance ?? "не розраховано"} км
           </p>
+
           <p>
-            <strong>End date:</strong> {formatDate(route.endDate)}
+            <strong>Пальне:</strong>{" "}
+            {route.fuelUsed ?? "не розраховано"} л
           </p>
+
           <p>
-            <strong>Start odometer:</strong> {route.startOdometer} km
+            <strong>Виручка:</strong> {route.revenue} ₴
           </p>
+
           <p>
-            <strong>End odometer:</strong>{" "}
-            {route.endOdometer ?? "Not closed"} km
-          </p>
-          <p>
-            <strong>Total distance:</strong>{" "}
-            {route.totalDistance ?? "Not calculated"} km
-          </p>
-          <p>
-            <strong>Fuel used:</strong>{" "}
-            {route.fuelUsed ?? "Not calculated"} l
-          </p>
-          <p>
-            <strong>Earnings:</strong> {route.earnings} ₴
+            <strong>Оплата водію:</strong> {route.driverPayment} ₴
           </p>
         </div>
       ))}
@@ -371,18 +436,18 @@ function AdminRoutesTab() {
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((page) => page - 1)}
           >
-            Previous
+            Назад
           </button>
 
           <span style={{ margin: "0 12px" }}>
-            Page {currentPage} of {totalPages}
+            Сторінка {currentPage} з {totalPages}
           </span>
 
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((page) => page + 1)}
           >
-            Next
+            Вперед
           </button>
         </div>
       )}
