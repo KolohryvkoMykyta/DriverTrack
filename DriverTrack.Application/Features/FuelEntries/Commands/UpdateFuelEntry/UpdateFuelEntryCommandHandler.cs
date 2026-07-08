@@ -10,20 +10,20 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.UpdateFuelEntry
     {
         private readonly IFuelEntryRepository _fuelEntryRepository;
         private readonly IVehicleRepository _vehicleRepository;
-        private readonly IFuelConsumptionCalculator _consumptionCalculator;
+        private readonly IFuelEntriesRecalculationService _fuelEntriesRecalculationService;
         private readonly IVehicleAverageConsumptionCalculator _vehicleAverageConsumptionCalculator;
         private readonly IUnitOfWork _unitOfWork;
 
         public UpdateFuelEntryCommandHandler(
             IFuelEntryRepository fuelEntryRepository,
             IVehicleRepository vehicleRepository,
-            IFuelConsumptionCalculator consumptionCalculator,
+            IFuelEntriesRecalculationService fuelEntriesRecalculationService,
             IVehicleAverageConsumptionCalculator vehicleAverageConsumptionCalculator,
             IUnitOfWork unitOfWork)
         {
             _fuelEntryRepository = fuelEntryRepository;
             _vehicleRepository = vehicleRepository;
-            _consumptionCalculator = consumptionCalculator;
+            _fuelEntriesRecalculationService = fuelEntriesRecalculationService;
             _vehicleAverageConsumptionCalculator = vehicleAverageConsumptionCalculator;
             _unitOfWork = unitOfWork;
         }
@@ -40,38 +40,24 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.UpdateFuelEntry
             entry.Liters = request.Liters;
             entry.IsFullTank = request.IsFullTank;
 
-            if (entry.IsFullTank)
-            {
-                var (Distance, Consumption) = await _consumptionCalculator.CalculateAsync(
-                    entry.VehicleId,
-                    request.OdometerReading,
-                    request.Liters,
-                    cancellationToken
-                );
-
-                entry.DistanceSinceLastRefuel = Distance;
-                entry.FuelConsumption = Consumption;
-            }
-            else 
-            {
-                entry.DistanceSinceLastRefuel = null;
-                entry.FuelConsumption = null;
-            }
-
             _fuelEntryRepository.Update(entry);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            if (entry.IsFullTank)
+            await _fuelEntriesRecalculationService.RecalculateForVehicleAsync(
+                entry.VehicleId,
+                cancellationToken);
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var vehicle = await _vehicleRepository.GetByIdAsync(entry.VehicleId, cancellationToken);
+
+            if (vehicle != null)
             {
-                var vehicle = await _vehicleRepository.GetByIdAsync(entry.VehicleId, cancellationToken);
+                vehicle.AverageFuelConsumption =
+                    await _vehicleAverageConsumptionCalculator.CalculateAsync(entry.VehicleId, cancellationToken);
 
-                if (vehicle != null)
-                {
-                    vehicle.AverageFuelConsumption = await _vehicleAverageConsumptionCalculator.CalculateAsync(entry.VehicleId, cancellationToken);
-
-                    _vehicleRepository.Update(vehicle);
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                }
+                _vehicleRepository.Update(vehicle);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
 
             return Unit.Value;

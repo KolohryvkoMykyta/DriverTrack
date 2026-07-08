@@ -1,11 +1,8 @@
-﻿using DriverTrack.Application.Common.Constants.ErrorMessages;
-using DriverTrack.Application.Common.Exceptions;
-using DriverTrack.Application.DTOs;
+﻿using DriverTrack.Application.DTOs;
 using DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry;
 using DriverTrack.Application.Features.FuelEntries.Commands.DeleteFuelEntry;
 using DriverTrack.Application.Features.FuelEntries.Commands.UpdateFuelEntry;
-using DriverTrack.Application.Features.FuelEntries.Queries.GetFuelByDriverId;
-using DriverTrack.Application.Features.FuelEntries.Queries.GetFuelByVehicleId;
+using DriverTrack.Application.Features.FuelEntries.Queries.GetFuelEntries;
 using DriverTrack.Application.Features.FuelEntries.Queries.GetFuelEntryById;
 using DriverTrack.WebAPI.Contracts.FuelEntries;
 using MediatR;
@@ -42,26 +39,9 @@ namespace DriverTrack.WebAPI.Controllers
             [FromQuery] DateTime? to,
             CancellationToken ct)
         {
-            if (driverId.HasValue && vehicleId.HasValue)
-            {
-                throw new BusinessException(ErrorMessages.Filters.OnlyOneFilterAllowed);
-            }
+            var entries = await _mediator.Send(new GetFuelEntriesQuery(driverId, vehicleId, from, to), ct);
 
-            if (driverId.HasValue)
-            {
-                var result = await _mediator.Send(new GetFuelByDriverIdQuery(driverId.Value, from, to), ct);
-
-                return Ok(result);
-            }
-
-            if (vehicleId.HasValue)
-            {
-                var result = await _mediator.Send(new GetFuelByVehicleIdQuery(vehicleId.Value, from, to), ct);
-
-                return Ok(result);
-            }
-
-            throw new BusinessException(ErrorMessages.Filters.DriverOrVehicleRequired);
+            return Ok(entries);
         }
 
         [HttpPost]

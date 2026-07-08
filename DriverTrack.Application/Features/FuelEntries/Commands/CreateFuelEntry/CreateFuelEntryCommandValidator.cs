@@ -8,23 +8,23 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
         public CreateFuelEntryCommandValidator()
         {
             RuleFor(x => x.DriverId)
-                .NotEmpty().WithMessage("Driver id is required.");
+                .NotEmpty().WithMessage("Ідентифікатор водія є обов'язковим.");
 
             RuleFor(x => x.VehicleId)
-                .NotEmpty().WithMessage("Vehicle id is required.");
+                .NotEmpty().WithMessage("Ідентифікатор автомобіля є обов'язковим.");
 
             RuleFor(x => x.Date)
                 .Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage("Date is required.")
-                .LessThanOrEqualTo(DateTime.UtcNow).WithMessage("Date cannot be in the future.");
+                .NotEmpty().WithMessage("Дата є обов'язковою.")
+                .LessThanOrEqualTo(DateTime.UtcNow).WithMessage("Дата не може бути в майбутньому.");
 
             RuleFor(x => x.OdometerReading)
-                .GreaterThanOrEqualTo(0).WithMessage("Odometer reading must be >= 0.")
-                .LessThanOrEqualTo(VehicleValidationConstants.MaxOdometerReading).WithMessage($"Odometer reading must be <= {VehicleValidationConstants.MaxOdometerReading}.");
+                .GreaterThanOrEqualTo(0).WithMessage("Показник одометра повинен бути >= 0.")
+                .LessThanOrEqualTo(VehicleValidationConstants.MaxOdometerReading).WithMessage($"Показник одометра повинен бути <= {VehicleValidationConstants.MaxOdometerReading}.");
 
             RuleFor(x => x.Liters)
-                .GreaterThan(0).WithMessage("Liters must be > 0.")
-                .LessThanOrEqualTo(FuelEntryValidationConstants.MaxLiters).WithMessage($"Liters must be <= {FuelEntryValidationConstants.MaxLiters}.");
+                .GreaterThan(0).WithMessage("Кількість літрів повинна бути > 0.")
+                .LessThanOrEqualTo(FuelEntryValidationConstants.MaxLiters).WithMessage($"Кількість літрів повинна бути <= {FuelEntryValidationConstants.MaxLiters}.");
         }
     }
 }

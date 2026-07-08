@@ -9,18 +9,18 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.CloseRoute
         {
             RuleFor(x => x.RouteId)
                 .NotEmpty()
-                .WithMessage("Route id is required.");
+                .WithMessage("Ідентифікатор маршруту є обов'язковим.");
 
             RuleFor(x => x.EndOdometer)
                 .Cascade(CascadeMode.Stop)
                 .GreaterThanOrEqualTo(0)
-                .WithMessage("End odometer must be greater than or equal to 0.")
+                .WithMessage("Показник одометра завершення повинен бути >= 0.")
                 .LessThanOrEqualTo(VehicleValidationConstants.MaxOdometerReading)
-                .WithMessage($"End odometer must be less than or equal to {VehicleValidationConstants.MaxOdometerReading}.");
+                .WithMessage($"Показник одометра завершення повинен бути <= {VehicleValidationConstants.MaxOdometerReading}.");
 
             RuleFor(x => x.EndDate)
                 .Must(d => d == null || d.Value <= DateTime.UtcNow)
-                .WithMessage("End date cannot be in the future.");
+                .WithMessage("Дата завершення не може бути в майбутньому.");
         }
     }
 }

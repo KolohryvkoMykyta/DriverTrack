@@ -7,7 +7,6 @@ import AdminDriversTab from "./AdminDriversTab";
 import AdminVehiclesTab from "./AdminVehiclesTab";
 import AdminRoutesTab from "./AdminRoutesTab";
 import AdminFuelTab from "./AdminFuelTab";
-import AdminStatisticsTab from "./AdminStatisticsTab";
 import AdminRouteTypesTab from "./AdminRouteTypesTab";
 import AdminOverviewTab from "./AdminOverviewTab";
 
@@ -25,8 +24,7 @@ type AdminTab =
   | "vehicles"
   | "routes"
   | "fuel"
-  | "routeTypes"
-  | "statistics";
+  | "routeTypes";
 
 function AdminDashboardPage() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
@@ -61,9 +59,6 @@ function AdminDashboardPage() {
       case "routeTypes":
         return <AdminRouteTypesTab />;
 
-      case "statistics":
-        return <AdminStatisticsTab />;
-
       default:
         return null;
     }
@@ -85,27 +80,23 @@ function AdminDashboardPage() {
         </button>
 
         <button onClick={() => setActiveTab("drivers")}>
-          Drivers
+          Водії
         </button>
 
         <button onClick={() => setActiveTab("vehicles")}>
-          Vehicles
+          Автомобілі
         </button>
 
         <button onClick={() => setActiveTab("routes")}>
-          Routes
+          Маршрути
         </button>
 
         <button onClick={() => setActiveTab("fuel")}>
-          Fuel
+          Заправки
         </button>
 
         <button onClick={() => setActiveTab("routeTypes")}>
-          Route Types
-        </button>
-
-        <button onClick={() => setActiveTab("statistics")}>
-          Statistics
+          Типи маршрутів
         </button>
       </div>
 

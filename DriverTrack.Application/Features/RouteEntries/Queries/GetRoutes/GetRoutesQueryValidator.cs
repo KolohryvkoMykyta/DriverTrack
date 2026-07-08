@@ -9,7 +9,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Queries.GetRoutesByDrive
         {
             RuleFor(x => x)
                 .HasValidInterval(x => x.FromDate, x => x.ToDate)
-                .WithMessage("From date must be less than or equal to To date.");
+                .WithMessage("Дата початку не може бути пізніше дати завершення");
         }
     }
 }

@@ -9,20 +9,20 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.UpdateFuelEntry
         {
             RuleFor(x => x.Id)
                 .NotEmpty()
-                .WithMessage("Fuel entry id is required.");
+                .WithMessage("Ідентифікатор запису пального є обов'язковим.");
 
             RuleFor(x => x.Date)
                 .Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage("Date is required.")
-                .LessThanOrEqualTo(DateTime.UtcNow).WithMessage("Date cannot be in the future.");
+                .NotEmpty().WithMessage("Дата є обов'язковою.")
+                .LessThanOrEqualTo(DateTime.UtcNow).WithMessage("Дата не може бути в майбутньому.");
 
             RuleFor(x => x.OdometerReading)
-                .GreaterThanOrEqualTo(0).WithMessage("Odometer reading must be >= 0.")
-                .LessThanOrEqualTo(VehicleValidationConstants.MaxOdometerReading).WithMessage($"Odometer reading must be <= {VehicleValidationConstants.MaxOdometerReading}.");
+                .GreaterThanOrEqualTo(0).WithMessage("Показник одометра повинен бути >= 0.")
+                .LessThanOrEqualTo(VehicleValidationConstants.MaxOdometerReading).WithMessage($"Показник одометра повинен бути <= {VehicleValidationConstants.MaxOdometerReading}.");
 
             RuleFor(x => x.Liters)
-                .GreaterThan(0).WithMessage("Liters must be > 0.")
-                .LessThanOrEqualTo(FuelEntryValidationConstants.MaxLiters).WithMessage($"Liters must be <= {FuelEntryValidationConstants.MaxLiters}.");
+                .GreaterThan(0).WithMessage("Кількість літрів повинна бути > 0.")
+                .LessThanOrEqualTo(FuelEntryValidationConstants.MaxLiters).WithMessage($"Кількість літрів повинна бути   <= {FuelEntryValidationConstants.MaxLiters}.");
         }
     }
 }

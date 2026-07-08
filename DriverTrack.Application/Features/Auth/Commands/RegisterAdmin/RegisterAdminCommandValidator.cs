@@ -7,12 +7,12 @@ namespace DriverTrack.Application.Features.Auth.Commands.RegisterAdmin
         public RegisterAdminCommandValidator()
         {
             RuleFor(x => x.Email)
-                .NotEmpty()
-                .EmailAddress();
+                .NotEmpty().WithMessage("Необхідно вказати email.")
+                .EmailAddress().WithMessage("Некоректний формат email.");
 
             RuleFor(x => x.Password)
-                .NotEmpty()
-                .MinimumLength(4);
+                .NotEmpty().WithMessage("Необхідно вказати пароль.")
+                .MinimumLength(4).WithMessage("Пароль повинен містити щонайменше 4 символи.");
         }
     }
 }

@@ -8,7 +8,7 @@ namespace DriverTrack.Application.Features.RouteTypes.Commands.DeleteRouteType
         {
             RuleFor(x => x.Id)
                 .NotEmpty()
-                .WithMessage("Route type id is required.");
+                .WithMessage("Ідентифікатор типу маршруту є обов'язковим.");
         }
     }
 }

@@ -10,52 +10,52 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.UpdateRoute
         {
             RuleFor(x => x.Id)
             .NotEmpty()
-            .WithMessage("Route id is required.");
+            .WithMessage("Ідентифікатор маршруту є обов'язковим.");
 
             RuleFor(x => x.VehicleId)
                 .NotEmpty()
-                .WithMessage("Vehicle id is required.");
+                .WithMessage("Ідентифікатор автомобіля є обов'язковим.");
 
             RuleFor(x => x.RouteTypeId)
                 .NotEmpty()
-                .WithMessage("Route type id is required.");
+                .WithMessage("Ідентифікатор типу маршруту є обов'язковим.");
 
             RuleFor(x => x.StartDate)
                 .NotEmpty()
-                .WithMessage("Start date is required.")
+                .WithMessage("Дата початку є обов'язковою.")
                 .Must(d => d <= DateTime.UtcNow)
-                .WithMessage("Start date cannot be in the future.");
+                .WithMessage("Дата початку не може бути в майбутньому.");
 
             RuleFor(x => x.EndDate)
                 .Must(d => d == null || d.Value <= DateTime.UtcNow)
-                .WithMessage("End date cannot be in the future.");
+                .WithMessage("Дата завершення не може бути в майбутньому.");
 
             RuleFor(x => x)
                 .HasValidInterval(x => x.StartDate, x => x.EndDate)
-                .WithMessage("Start date must be less than or equal to End date.");
+                .WithMessage("Дата початку повинна бути менше або дорівнювати даті завершення.");
 
             RuleFor(x => x)
                 .Must(x => x.EndDate.HasValue == x.EndOdometer.HasValue)
-                .WithMessage("End date and end odometer must be provided together.");
+                .WithMessage("Дата завершення та показник одометра завершення повинні бути вказані разом.");
 
             RuleFor(x => x.StartOdometer)
                 .GreaterThanOrEqualTo(0)
-                .WithMessage("Start odometer must be greater than or equal to 0.")
+                .WithMessage("Показник одометра початку повинен бути >= 0.")
                 .LessThanOrEqualTo(VehicleValidationConstants.MaxOdometerReading)
-                .WithMessage($"Start odometer must be less than or equal to {VehicleValidationConstants.MaxOdometerReading}.");
+                .WithMessage($"Показник одометра початку повинен бути <= {VehicleValidationConstants.MaxOdometerReading}.");
 
             When(x => x.EndOdometer.HasValue, () =>
             {
                 RuleFor(x => x.EndOdometer!.Value)
                     .GreaterThanOrEqualTo(0)
-                    .WithMessage("End odometer must be greater than or equal to 0.")
+                    .WithMessage("Показник одометра завершення повинен бути >= 0.")
                     .LessThanOrEqualTo(VehicleValidationConstants.MaxOdometerReading)
-                    .WithMessage($"End odometer must be less than or equal to {VehicleValidationConstants.MaxOdometerReading}.");
+                    .WithMessage($"Показник одометра завершення повинен бути <= {VehicleValidationConstants.MaxOdometerReading}.");
             });
 
             RuleFor(x => x)
                 .HasValidInterval(x => x.StartOdometer, x => x.EndOdometer)
-                .WithMessage("Start odometer must be less than or equal to End odometer.");
+                .WithMessage("Показник одометра початку повинен бути менше або дорівнювати показнику одометра завершення.");
         }
     }
 }

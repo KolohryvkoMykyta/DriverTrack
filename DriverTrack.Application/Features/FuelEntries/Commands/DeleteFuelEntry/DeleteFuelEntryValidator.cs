@@ -8,7 +8,7 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.DeleteFuelEntry
         {
             RuleFor(x => x.Id)
                 .NotEmpty()
-                .WithMessage("Fuel entry id is required.");
+                .WithMessage("Ідентифікатор запису пального є обов'язковим.");
         }
     }
 }

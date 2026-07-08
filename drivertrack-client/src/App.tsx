@@ -5,6 +5,7 @@ import DriverDashboardPage from "./pages/DriverDashboardPage";
 import LoginPage from "./pages/LoginPage";
 import VehicleDetailsPage from "./pages/admin/VehicleDetailsPage";
 import RouteDetailsPage from "./pages/admin/RouteDetailsPage";
+import FuelDetailsPage from "./pages/admin/FuelDetailsPage";
 
 function App() {
   const token = localStorage.getItem("token");
@@ -77,6 +78,16 @@ function App() {
         element={
           token && role === "Admin" ? (
             <RouteDetailsPage />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/admin/fuel/:fuelEntryId"
+        element={
+          token && role === "Admin" ? (
+            <FuelDetailsPage />
           ) : (
             <Navigate to="/login" replace />
           )

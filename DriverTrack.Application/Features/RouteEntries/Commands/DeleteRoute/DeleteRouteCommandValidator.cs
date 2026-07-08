@@ -8,7 +8,7 @@ namespace DriverTrack.Application.Features.RouteEntries.Commands.DeleteRoute
         {
             RuleFor(x => x.Id)
                 .NotEmpty()
-                .WithMessage("Route entry id is required.");
+                .WithMessage("Ідентифікатор запису маршруту є обов'язковим.");
         }
     }
 }

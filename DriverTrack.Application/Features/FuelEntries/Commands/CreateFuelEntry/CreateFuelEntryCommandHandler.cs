@@ -12,22 +12,22 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
         private readonly IFuelEntryRepository _fuelEntryRepository;
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IDriverRepository _driverRepository;
-        private readonly IFuelConsumptionCalculator _consumptionCalculator;
+        private readonly IFuelEntriesRecalculationService _fuelEntriesRecalculationService;
         private readonly IVehicleAverageConsumptionCalculator _vehicleAverageConsumptionCalculator;
         private readonly IUnitOfWork _unitOfWork;
 
         public CreateFuelEntryCommandHandler(
-            IFuelEntryRepository fuelEntryRepository, 
+            IFuelEntryRepository fuelEntryRepository,
             IVehicleRepository vehicleRepository,
             IDriverRepository driverRepository,
-            IFuelConsumptionCalculator consumptionCalculator, 
+            IFuelEntriesRecalculationService fuelEntriesRecalculationService,
             IVehicleAverageConsumptionCalculator vehicleAverageConsumptionCalculator,
             IUnitOfWork unitOfWork)
         {
             _fuelEntryRepository = fuelEntryRepository;
             _vehicleRepository = vehicleRepository;
             _driverRepository = driverRepository;
-            _consumptionCalculator = consumptionCalculator;
+            _fuelEntriesRecalculationService = fuelEntriesRecalculationService;
             _vehicleAverageConsumptionCalculator = vehicleAverageConsumptionCalculator;
             _unitOfWork = unitOfWork;
         }
@@ -40,7 +40,6 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
             if (await _vehicleRepository.GetByIdAsync(request.VehicleId, cancellationToken) is null)
                 throw new BusinessException(ErrorMessages.FuelEntries.VehicleNotFoundById(request.VehicleId));
 
-
             var entry = new FuelEntry
             {
                 Id = Guid.NewGuid(),
@@ -52,33 +51,24 @@ namespace DriverTrack.Application.Features.FuelEntries.Commands.CreateFuelEntry
                 IsFullTank = request.IsFullTank
             };
 
-            if (request.IsFullTank)
-            {
-                var (Distance, Consumption) = await _consumptionCalculator.CalculateAsync(
-                    request.VehicleId,
-                    request.OdometerReading,
-                    request.Liters,
-                    cancellationToken
-                );
-
-                entry.DistanceSinceLastRefuel = Distance;
-                entry.FuelConsumption = Consumption;
-            }
-
             await _fuelEntryRepository.AddAsync(entry, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            if (request.IsFullTank)
+            await _fuelEntriesRecalculationService.RecalculateForVehicleAsync(
+                request.VehicleId,
+                cancellationToken);
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var vehicle = await _vehicleRepository.GetByIdAsync(request.VehicleId, cancellationToken);
+
+            if (vehicle != null)
             {
-                var vehicle = await _vehicleRepository.GetByIdAsync(request.VehicleId, cancellationToken);
-                
-                if (vehicle != null)
-                {
-                    vehicle.AverageFuelConsumption = await _vehicleAverageConsumptionCalculator.CalculateAsync(request.VehicleId, cancellationToken);
-                    
-                    _vehicleRepository.Update(vehicle);
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                }
+                vehicle.AverageFuelConsumption =
+                    await _vehicleAverageConsumptionCalculator.CalculateAsync(request.VehicleId, cancellationToken);
+
+                _vehicleRepository.Update(vehicle);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
 
             return entry.Id;

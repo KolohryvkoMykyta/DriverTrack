@@ -3,17 +3,26 @@ import { useEffect, useState } from "react";
 import {
   getRouteTypes,
   createRouteType,
+  updateRouteType,
   deleteRouteType,
   type RouteType,
 } from "../../api/routeTypesApi";
+
+import { getApiErrorMessage } from "../../api/apiErrorHandler";
 
 function AdminRouteTypesTab() {
   const [routeTypes, setRouteTypes] = useState<RouteType[]>([]);
 
   const [name, setName] = useState("");
-  const [earnings, setEarnings] = useState("");
+  const [driverPayment, setDriverPayment] = useState("");
+  const [revenue, setRevenue] = useState("");
 
-  const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDriverPayment, setEditDriverPayment] = useState("");
+  const [editRevenue, setEditRevenue] = useState("");
+
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     loadRouteTypes();
@@ -26,123 +35,228 @@ function AdminRouteTypesTab() {
       setRouteTypes(
         [...data].sort((a, b) => a.name.localeCompare(b.name))
       );
-    } catch {
-      setError("Failed to load route types.");
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error));
     }
   }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    setErrorMessage("");
 
-    if (!name || !earnings) {
-      setError("Fill all fields.");
+    if (!name.trim() || !driverPayment || !revenue) {
+      setErrorMessage("Заповніть усі поля.");
       return;
     }
 
     try {
-      await createRouteType(
-        name,
-        Number(earnings)
-      );
+      await createRouteType({
+        name: name.trim(),
+        driverPayment: Number(driverPayment),
+        revenue: Number(revenue),
+      });
 
       setName("");
-      setEarnings("");
+      setDriverPayment("");
+      setRevenue("");
 
       await loadRouteTypes();
-    } catch {
-      setError("Failed to create route type.");
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error));
+    }
+  }
+
+  function startEdit(routeType: RouteType) {
+    setEditingId(routeType.id);
+    setEditName(routeType.name);
+    setEditDriverPayment(routeType.driverPayment.toString());
+    setEditRevenue(routeType.revenue.toString());
+    setErrorMessage("");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditName("");
+    setEditDriverPayment("");
+    setEditRevenue("");
+  }
+
+  async function handleUpdate(id: string) {
+    setErrorMessage("");
+
+    if (!editName.trim() || !editDriverPayment || !editRevenue) {
+      setErrorMessage("Заповніть усі поля.");
+      return;
+    }
+
+    try {
+      await updateRouteType(id, {
+        name: editName.trim(),
+        driverPayment: Number(editDriverPayment),
+        revenue: Number(editRevenue),
+      });
+
+      cancelEdit();
+      await loadRouteTypes();
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error));
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete route type?")) {
+    if (!confirm("Видалити тип маршруту?")) {
       return;
     }
 
     try {
       await deleteRouteType(id);
-
       await loadRouteTypes();
-    } catch {
-      setError("Failed to delete route type.");
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error));
     }
   }
 
   return (
     <div>
-      <h2>Route Types</h2>
+      <h2>Типи маршрутів</h2>
 
-      {error && (
+      {errorMessage && (
         <p style={{ color: "red" }}>
-          {error}
+          {errorMessage}
         </p>
       )}
 
-      <form
-        onSubmit={handleCreate}
-        style={{ marginBottom: "20px" }}
-      >
-        <h3>Add Route Type</h3>
+      <form onSubmit={handleCreate} style={{ marginBottom: "25px" }}>
+        <h3>Додати тип маршруту</h3>
 
         <div>
           <label>
-            Name:
+            Назва:
             <input
               value={name}
-              onChange={(e) =>
-                setName(e.target.value)
-              }
+              onChange={(e) => setName(e.target.value)}
             />
           </label>
         </div>
 
         <div>
           <label>
-            Earnings:
+            Оплата водію:
             <input
               type="number"
-              value={earnings}
-              onChange={(e) =>
-                setEarnings(e.target.value)
-              }
+              value={driverPayment}
+              onChange={(e) => setDriverPayment(e.target.value)}
+            />
+          </label>
+        </div>
+
+        <div>
+          <label>
+            Дохід:
+            <input
+              type="number"
+              value={revenue}
+              onChange={(e) => setRevenue(e.target.value)}
             />
           </label>
         </div>
 
         <button type="submit">
-          Add Route Type
+          Додати тип маршруту
         </button>
       </form>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Earnings</th>
-            <th></th>
-          </tr>
-        </thead>
+      <h3>Список типів маршрутів</h3>
 
-        <tbody>
+      {routeTypes.length === 0 ? (
+        <p>Типів маршрутів поки немає.</p>
+      ) : (
+        <div>
           {routeTypes.map((type) => (
-            <tr key={type.id}>
-              <td>{type.name}</td>
+            <div
+              key={type.id}
+              style={{
+                border: "1px solid #ccc",
+                padding: "15px",
+                marginBottom: "10px",
+              }}
+            >
+              {editingId === type.id ? (
+                <>
+                  <div>
+                    <label>
+                      Назва:
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                      />
+                    </label>
+                  </div>
 
-              <td>{type.earnings}</td>
+                  <div>
+                    <label>
+                      Оплата водію:
+                      <input
+                        type="number"
+                        value={editDriverPayment}
+                        onChange={(e) =>
+                          setEditDriverPayment(e.target.value)
+                        }
+                      />
+                    </label>
+                  </div>
 
-              <td>
-                <button
-                  onClick={() =>
-                    handleDelete(type.id)
-                  }
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
+                  <div>
+                    <label>
+                      Дохід:
+                      <input
+                        type="number"
+                        value={editRevenue}
+                        onChange={(e) => setEditRevenue(e.target.value)}
+                      />
+                    </label>
+                  </div>
+
+                  <button onClick={() => handleUpdate(type.id)}>
+                    Зберегти
+                  </button>
+
+                  <button onClick={cancelEdit}>
+                    Скасувати
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h4>{type.name}</h4>
+
+                  <p>
+                    <strong>Оплата водію:</strong>{" "}
+                    {type.driverPayment} грн
+                  </p>
+
+                  <p>
+                    <strong>Дохід:</strong>{" "}
+                    {type.revenue} грн
+                  </p>
+
+                  <p>
+                    <strong>Прибуток:</strong>{" "}
+                    {type.revenue - type.driverPayment} грн
+                  </p>
+
+                  <button onClick={() => startEdit(type)}>
+                    Редагувати
+                  </button>
+
+                  <button onClick={() => handleDelete(type.id)}>
+                    Видалити
+                  </button>
+                </>
+              )}
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      )}
     </div>
   );
 }

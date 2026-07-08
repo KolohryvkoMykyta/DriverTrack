@@ -14,7 +14,7 @@ namespace DriverTrack.Infrastructure.Services
 
         public async Task<double?> CalculateAsync(Guid vehicleId, CancellationToken ct)
         {
-            var allEntries = await _fuelEntryRepository.GetByVehicleIdAsync(vehicleId);
+            var allEntries = await _fuelEntryRepository.GetWithFiltersAsync(vehicleId : vehicleId);
 
             var fullTankEntries = allEntries
                 .Where(e => e.DistanceSinceLastRefuel != null && e.FuelConsumption != 0 )

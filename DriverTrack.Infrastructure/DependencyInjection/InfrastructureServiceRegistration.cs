@@ -31,10 +31,10 @@ namespace DriverTrack.Infrastructure.DependencyInjection
             services.AddScoped<IRouteTypeRepository, RouteTypeRepository>();
             services.AddScoped<IVehicleRepository, VehicleRepository>();
 
-            services.AddScoped<IFuelConsumptionCalculator, FuelConsumptionCalculator>();
             services.AddScoped<IVehicleAverageConsumptionCalculator, VehicleAverageConsumptionCalculator>();
             services.AddScoped<IFuelCostCalculator, FuelCostCalculator>();
             services.AddScoped<IOverviewStatisticsBuilder, OverviewStatisticsBuilder>();
+            services.AddScoped<IFuelEntriesRecalculationService, FuelEntriesRecalculationService>();
 
             services.AddScoped<IUserAccountRepository, UserAccountRepository>();
             services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();

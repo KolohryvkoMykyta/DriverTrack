@@ -8,7 +8,7 @@ namespace DriverTrack.Application.Features.Drivers.Commands.Delete
         {
             RuleFor(x => x.Id)
                 .NotEmpty()
-                .WithMessage("Driver id is required.");
+                .WithMessage("Ідентифікатор водія є обов'язковим.");
         }
     }
 }
