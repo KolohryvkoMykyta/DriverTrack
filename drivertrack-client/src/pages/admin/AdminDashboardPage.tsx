@@ -8,7 +8,7 @@ import AdminVehiclesTab from "./AdminVehiclesTab";
 import AdminRoutesTab from "./AdminRoutesTab";
 import AdminFuelTab from "./AdminFuelTab";
 import AdminRouteTypesTab from "./AdminRouteTypesTab";
-import AdminOverviewTab from "./AdminOverviewTab";
+import AdminOverviewTab from "./AdminOverviewPage";
 
 type CurrentUser = {
   id: string;

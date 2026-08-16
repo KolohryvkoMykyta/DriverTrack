@@ -19,5 +19,8 @@ namespace DriverTrack.Application.Interfaces.Persistence
         Task<UserAccount?> GetByIdWithDriverAsync(
             Guid id, 
             CancellationToken cancellationToken);
+        Task<UserAccount?> GetByDriverIdAsync(
+            Guid driverId,
+            CancellationToken cancellationToken = default);
     }
 }

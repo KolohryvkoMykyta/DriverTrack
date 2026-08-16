@@ -64,6 +64,7 @@ namespace DriverTrack.Application.Features.Auth.Commands.RegisterDriver
             var user = new UserAccount
             {
                 Id = Guid.NewGuid(),
+                Name = request.Name,
                 Email = request.Email,
                 PasswordHash = _passwordHasher.Hash(request.Password),
                 Role = UserRole.Driver,

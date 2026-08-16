@@ -41,6 +41,7 @@ namespace DriverTrack.WebAPI.Controllers
             CancellationToken cancellationToken)
         {
             var command = new RegisterAdminCommand(
+                request.Name,
                 request.Email,
                 request.Password);
 

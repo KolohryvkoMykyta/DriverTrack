@@ -34,9 +34,7 @@ public sealed class GetCurrentUserQueryHandler
             Email = user.Email,
             Role = user.Role.ToString(),
             DriverId = user.DriverId,
-            DisplayName = user.Driver != null
-                ? user.Driver.Name
-                : user.Email
+            DisplayName = user.Name
         };
     }
 }
