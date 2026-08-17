@@ -23,7 +23,7 @@ namespace DriverTrack.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<DriverDto>>> Get()
+        public async Task<ActionResult<List<DriverListItemDto>>> Get()
         {
             var result = await _mediator.Send(new GetAllDriversQuery());
 

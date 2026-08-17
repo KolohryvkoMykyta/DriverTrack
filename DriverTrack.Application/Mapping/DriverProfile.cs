@@ -9,6 +9,15 @@ namespace DriverTrack.Application.Mapping
         public DriverProfile()
         {
             CreateMap<Driver, DriverDto>();
+
+            CreateMap<Vehicle, DriverVehicleListItemDto>();
+
+            CreateMap<Driver, DriverListItemDto>()
+                .ForMember(
+                    destination => destination.Vehicles,
+                    options => options.MapFrom(
+                        source => source.Vehicles
+                            .Where(vehicle => vehicle.IsActive)));
         }
     }
 }

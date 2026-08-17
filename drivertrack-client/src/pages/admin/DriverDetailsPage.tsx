@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useAdminSidebar } from "../../contexts/AdminSidebarContext";
+
+import DriverDetailsFilters, {
+  type DriverDetailsTab,
+  type DriverPeriodMode,
+} from "./driver-details/DriverDetailsFilters";
+
+import "../../styles/admin-driver-details.css";
+
+import { ArrowLeft } from "lucide-react";
+
+import DriverProfileCard from "./driver-details/DriverProfileCard";
 
 import {
   getDriverById,
@@ -19,13 +30,23 @@ import {
   getFuelEntriesByDriverId,
   type FuelEntry,
 } from "../../api/fuelEntriesApi";
+import {
+  getRouteTypes,
+  type RouteType,
+} from "../../api/routeTypesApi";
 import { getApiErrorMessage } from "../../api/apiErrorHandler";
+import DriverSummaryCards from "./driver-details/DriverSummaryCards";
+import DriverDetailsTabs from "./driver-details/DriverDetailsTabs";
+import DriverVehiclesPanel from "./driver-details/DriverVehiclesPanel";
+import EditDriverModal from "./driver-details/EditDriverModal";
+import DriverStatusModal from "./driver-details/DriverStatusModal";
+import DriverRoutesPanel from "./driver-details/DriverRoutesPanel";
+import DriverFuelPanel from "./driver-details/DriverFuelPanel";
+import "../../styles/admin-driver-details-modals.css";
+import "../../styles/admin-driver-details-entries.css";
 
 const ROUTES_PAGE_SIZE = 5;
 const FUEL_PAGE_SIZE = 5;
-
-type DetailsTab = "vehicles" | "routes" | "fuel";
-type PeriodMode = "week" | "month" | "all" | "custom";
 
 function DriverDetailsPage() {
   const { driverId } = useParams();
@@ -35,25 +56,37 @@ function DriverDetailsPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [routeEntries, setRouteEntries] = useState<RouteEntry[]>([]);
   const [fuelEntries, setFuelEntries] = useState<FuelEntry[]>([]);
+  const [routeTypes, setRouteTypes] = useState<RouteType[]>([]);
 
-  const [detailsTab, setDetailsTab] = useState<DetailsTab>("vehicles");
-  const [periodMode, setPeriodMode] = useState<PeriodMode>("month");
+  const [
+    detailsTab,
+    setDetailsTab,
+  ] = useState<DriverDetailsTab>(
+    "vehicles"
+  );
+
+  const [
+    periodMode,
+    setPeriodMode,
+  ] = useState<DriverPeriodMode>(
+    "month"
+  );
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("all");
-  const [selectedFuelVehicleId, setSelectedFuelVehicleId] = useState<string>("all");
   const [routesPage, setRoutesPage] = useState(1);
   const [fuelPage, setFuelPage] = useState(1);
 
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editPhoneNumber, setEditPhoneNumber] = useState("");
-  const [editIsActive, setEditIsActive] = useState(true);
-  const [editErrorMessage, setEditErrorMessage] = useState("");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [statusErrorMessage, setStatusErrorMessage] = useState("");
+
+  const { setSidebarContent, clearSidebarContent } = useAdminSidebar();
 
   async function loadDriverDetails() {
     try {
@@ -65,20 +98,21 @@ function DriverDetailsPage() {
         return;
       }
 
-      const [driverData, vehiclesData, routesData, fuelData] =
+      const [driverData, vehiclesData, routesData, fuelData, routeTypesData] =
         await Promise.all([
           getDriverById(driverId),
           getVehiclesByDriverId(driverId),
           getRouteEntriesByDriverId(driverId),
           getFuelEntriesByDriverId(driverId),
+          getRouteTypes(),
         ]);
 
       setDriver(driverData);
       setVehicles(vehiclesData);
       setRouteEntries(routesData);
       setFuelEntries(fuelData);
+      setRouteTypes(routeTypesData);
       setSelectedVehicleId("all");
-      setSelectedFuelVehicleId("all");
       setRoutesPage(1);
       setFuelPage(1);
     } catch (error) {
@@ -93,11 +127,58 @@ function DriverDetailsPage() {
     loadDriverDetails();
   }, [driverId]);
 
+  useEffect(() => {
+    setSidebarContent(
+      <DriverDetailsFilters
+        periodMode={periodMode}
+        from={from}
+        to={to}
+        vehicles={vehicles}
+        selectedVehicleId={selectedVehicleId}
+        isLoading={isLoading}
+        onPeriodModeChange={(mode) => {
+          setPeriodMode(mode);
+          setRoutesPage(1);
+          setFuelPage(1);
+        }}
+        onFromChange={(value) => {
+          setFrom(value);
+          setRoutesPage(1);
+          setFuelPage(1);
+        }}
+        onToChange={(value) => {
+          setTo(value);
+          setRoutesPage(1);
+          setFuelPage(1);
+        }}
+        onVehicleChange={(value) => {
+          setSelectedVehicleId(value);
+          setRoutesPage(1);
+          setFuelPage(1);
+        }}
+      />
+    );
+
+    return () => {
+      clearSidebarContent();
+    };
+  }, [
+    detailsTab,
+    periodMode,
+    from,
+    to,
+    vehicles,
+    selectedVehicleId,
+    isLoading,
+    setSidebarContent,
+    clearSidebarContent,
+  ]);
+
   function getDateString(date: Date) {
     return date.toISOString().split("T")[0];
   }
 
-  function getPeriodDates(mode: PeriodMode) {
+  function getPeriodDates(mode: DriverPeriodMode) {
     const today = new Date();
 
     if (mode === "all") {
@@ -157,98 +238,33 @@ function DriverDetailsPage() {
     return true;
   }
 
-  function changePeriodMode(mode: PeriodMode) {
-    setPeriodMode(mode);
-    setRoutesPage(1);
-    setFuelPage(1);
-  }
-
-  function startEditing() {
-    if (!driver) {
-      return;
-    }
-
-    setEditName(driver.name);
-    setEditPhoneNumber(driver.phoneNumber);
-    setEditIsActive(driver.isActive);
-    setEditErrorMessage("");
-    setIsEditing(true);
-  }
-
-  function cancelEditing() {
-    setIsEditing(false);
-    setEditErrorMessage("");
-  }
-
-  async function handleUpdateDriver(event: React.FormEvent) {
-    event.preventDefault();
-
+  async function handleConfirmDriverStatus() {
     if (!driver) {
       return;
     }
 
     try {
-      setEditErrorMessage("");
+      setIsChangingStatus(true);
+      setStatusErrorMessage("");
 
       await updateDriver(driver.id, {
-        name: editName,
-        phoneNumber: editPhoneNumber,
-        isActive: editIsActive,
+        name: driver.name,
+        phoneNumber: driver.phoneNumber,
+        isActive: !driver.isActive,
       });
 
-      const updatedDriver = await getDriverById(driver.id);
+      const updatedDriver =
+        await getDriverById(driver.id);
+
       setDriver(updatedDriver);
-
-      setIsEditing(false);
+      setIsStatusModalOpen(false);
     } catch (error) {
-      setEditErrorMessage(getApiErrorMessage(error));
+      setStatusErrorMessage(
+        getApiErrorMessage(error)
+      );
+    } finally {
+      setIsChangingStatus(false);
     }
-  }
-
-  function formatDate(value: string | null | undefined) {
-    if (!value) {
-      return "Не завершено";
-    }
-
-    return new Date(value).toLocaleString("uk-UA");
-  }
-
-  function formatNumber(value: number | null | undefined) {
-    if (value === null || value === undefined) {
-      return "Немає даних";
-    }
-
-    return value.toFixed(2);
-  }
-
-  function formatMoney(value: number | null | undefined) {
-    if (value === null || value === undefined) {
-      return "0.00 грн";
-    }
-
-    return `${value.toFixed(2)} грн`;
-  }
-
-  function getVehicleName(vehicleId: string) {
-    const vehicle = vehicles.find((vehicle) => vehicle.id === vehicleId);
-
-    if (!vehicle) {
-      return "Невідомий автомобіль";
-    }
-
-    return `${vehicle.brand} ${vehicle.model} — ${vehicle.licensePlate}`;
-  }
-
-  function getPeriodButtonStyle(mode: PeriodMode) {
-    return {
-      fontWeight: periodMode === mode ? "bold" : "normal",
-    };
-  }
-
-  function getDetailsTabButtonStyle(tab: DetailsTab) {
-    return {
-      fontWeight: detailsTab === tab ? "bold" : "normal",
-    };
   }
 
   if (isLoading) {
@@ -287,26 +303,56 @@ function DriverDetailsPage() {
     isDateInSelectedPeriod(fuel.date)
   );
 
-  const summaryRouteCount = periodRouteEntries.length;
-  const summaryDistance = periodRouteEntries.reduce(
+  const filteredRouteEntries =
+    selectedVehicleId === "all"
+      ? periodRouteEntries
+      : periodRouteEntries.filter(
+          (route) => route.vehicleId === selectedVehicleId
+        );
+
+  const filteredFuelEntries =
+    selectedVehicleId === "all"
+      ? periodFuelEntries
+      : periodFuelEntries.filter(
+          (fuel) => fuel.vehicleId === selectedVehicleId
+        );
+
+  const filteredVehicles =
+    selectedVehicleId === "all"
+      ? vehicles
+      : vehicles.filter((vehicle) => vehicle.id === selectedVehicleId);
+
+  const summaryRouteCount = filteredRouteEntries.length;
+  const summaryDistance = filteredRouteEntries.reduce(
     (sum, route) => sum + (route.totalDistance ?? 0),
     0
   );
-  const summaryRevenue = periodRouteEntries.reduce(
+  const summaryRevenue = filteredRouteEntries.reduce(
     (sum, route) => sum + route.revenue,
     0
   );
-  const summaryDriverPayment = periodRouteEntries.reduce(
+  const summaryDriverPayment = filteredRouteEntries.reduce(
     (sum, route) => sum + route.driverPayment,
     0
   );
 
-  const filteredRouteEntries =
-  selectedVehicleId === "all"
-    ? periodRouteEntries
-    : periodRouteEntries.filter(
-        (route) => route.vehicleId === selectedVehicleId
-      );
+  const routesWithFuelData = filteredRouteEntries.filter(
+    (route) => route.fuelUsed !== null && route.fuelUsed !== undefined
+  );
+
+  const summaryFuelUsed =
+    filteredRouteEntries.length === 0
+      ? 0
+      : routesWithFuelData.length === 0
+        ? null
+        : routesWithFuelData.reduce(
+            (sum, route) => sum + (route.fuelUsed ?? 0),
+            0
+          );
+
+  const isFuelDataPartial =
+    routesWithFuelData.length > 0 &&
+    routesWithFuelData.length < filteredRouteEntries.length;
 
 const sortedRouteEntries = [...filteredRouteEntries].sort(
   (a, b) =>
@@ -322,13 +368,6 @@ const pagedRouteEntries = sortedRouteEntries.slice(
   routesPage * ROUTES_PAGE_SIZE
 );
 
-const filteredFuelEntries =
-  selectedFuelVehicleId === "all"
-    ? periodFuelEntries
-    : periodFuelEntries.filter(
-        (fuel) => fuel.vehicleId === selectedFuelVehicleId
-      );
-
 const sortedFuelEntries = [...filteredFuelEntries].sort(
   (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
 );
@@ -343,430 +382,98 @@ const pagedFuelEntries = sortedFuelEntries.slice(
 );
 
   return (
-    <div>
-      <button onClick={() => navigate(-1)}>
-        ← Назад
-      </button>
+    <div className="driver-details-page">
+      <Link
+        to="/admin/drivers"
+        className="driver-details-back"
+      >
+        <ArrowLeft size={16} />
 
-      <h2>Деталі водія</h2>
+        Водії
+      </Link>
 
-      {!isEditing && (
-        <div>
-          <h3>{driver.name}</h3>
+      <DriverProfileCard
+        driver={driver}
+        isChangingStatus={isChangingStatus}
+        onEdit={() => setIsEditModalOpen(true)}
+        onToggleStatus={() => {
+          setStatusErrorMessage("");
+          setIsStatusModalOpen(true);
+        }}
+      />
 
-          <p>
-            <strong>Телефон:</strong> {driver.phoneNumber}
-          </p>
+      <DriverSummaryCards
+        routeCount={summaryRouteCount}
+        distance={summaryDistance}
+        fuelUsed={summaryFuelUsed}
+        isFuelDataPartial={isFuelDataPartial}
+        revenue={summaryRevenue}
+        driverPayment={summaryDriverPayment}
+      />
 
-          <p>
-            <strong>Статус:</strong>{" "}
-            {driver.isActive ? "Активний" : "Неактивний"}
-          </p>
+      <section className="driver-data-section">
+        <DriverDetailsTabs
+          activeTab={detailsTab}
+          onChange={(tab) => {
+            setDetailsTab(tab);
+            setRoutesPage(1);
+            setFuelPage(1);
+          }}
+        />
 
-          <button type="button" onClick={startEditing}>
-            Редагувати
-          </button>
-        </div>
+        {detailsTab === "vehicles" && (
+          <DriverVehiclesPanel vehicles={filteredVehicles} />
+        )}
+
+        {detailsTab === "routes" && (
+          <DriverRoutesPanel
+            routes={pagedRouteEntries}
+            vehicles={vehicles}
+            routeTypes={routeTypes}
+            totalCount={filteredRouteEntries.length}
+            currentPage={routesPage}
+            totalPages={totalRoutePages}
+            onPageChange={setRoutesPage}
+          />
+        )}
+
+        {detailsTab === "fuel" && (
+          <DriverFuelPanel
+            fuelEntries={pagedFuelEntries}
+            vehicles={vehicles}
+            totalCount={filteredFuelEntries.length}
+            currentPage={fuelPage}
+            totalPages={totalFuelPages}
+            onPageChange={setFuelPage}
+          />
+        )}
+      </section>
+
+      {isEditModalOpen && (
+        <EditDriverModal
+          driver={driver}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdated={(updatedDriver) => {
+            setDriver(updatedDriver);
+            setIsEditModalOpen(false);
+          }}
+        />
       )}
 
-      {isEditing && (
-        <form onSubmit={handleUpdateDriver}>
-          <h3>Редагування водія</h3>
-
-          <div>
-            <label>Ім’я</label>
-            <br />
-            <input
-              value={editName}
-              onChange={(event) => setEditName(event.target.value)}
-            />
-          </div>
-
-          <div>
-            <label>Телефон</label>
-            <br />
-            <input
-              value={editPhoneNumber}
-              onChange={(event) => setEditPhoneNumber(event.target.value)}
-            />
-          </div>
-
-          <div>
-            <label>Статус</label>
-            <br />
-            <select
-              value={editIsActive ? "active" : "inactive"}
-              onChange={(event) =>
-                setEditIsActive(event.target.value === "active")
-              }
-            >
-              <option value="active">Активний</option>
-              <option value="inactive">Неактивний</option>
-            </select>
-          </div>
-
-          {editErrorMessage && (
-            <p style={{ color: "red" }}>{editErrorMessage}</p>
-          )}
-
-          <button type="submit">Зберегти</button>
-          <button type="button" onClick={cancelEditing}>
-            Скасувати
-          </button>
-        </form>
-      )}
-
-      <hr />
-
-      <h3>Період</h3>
-
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-        <button
-          style={getPeriodButtonStyle("week")}
-          onClick={() => changePeriodMode("week")}
-        >
-          Поточний тиждень
-        </button>
-
-        <button
-          style={getPeriodButtonStyle("month")}
-          onClick={() => changePeriodMode("month")}
-        >
-          Поточний місяць
-        </button>
-
-        <button
-          style={getPeriodButtonStyle("all")}
-          onClick={() => changePeriodMode("all")}
-        >
-          Весь час
-        </button>
-
-        <button
-          style={getPeriodButtonStyle("custom")}
-          onClick={() => changePeriodMode("custom")}
-        >
-          Власний період
-        </button>
-      </div>
-
-      {periodMode === "custom" && (
-        <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
-          <div>
-            <label>З дати</label>
-            <br />
-            <input
-              type="date"
-              value={from}
-              onChange={(event) => {
-                setFrom(event.target.value);
-                setRoutesPage(1);
-                setFuelPage(1);
-              }}
-            />
-          </div>
-
-          <div>
-            <label>По дату</label>
-            <br />
-            <input
-              type="date"
-              value={to}
-              onChange={(event) => {
-                setTo(event.target.value);
-                setRoutesPage(1);
-                setFuelPage(1);
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-        <div>
-          <h4>Маршрутів</h4>
-          <p>{summaryRouteCount}</p>
-        </div>
-
-        <div>
-          <h4>Пробіг</h4>
-          <p>{formatNumber(summaryDistance)} км</p>
-        </div>
-
-        <div>
-          <h4>Дохід компанії</h4>
-          <p>{formatMoney(summaryRevenue)}</p>
-        </div>
-
-        <div>
-          <h4>Зарплата водія</h4>
-          <p>{formatMoney(summaryDriverPayment)}</p>
-        </div>
-      </div>
-
-      <hr />
-
-      <h3>Дані водія</h3>
-
-      <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-        <button
-          style={getDetailsTabButtonStyle("vehicles")}
-          onClick={() => setDetailsTab("vehicles")}
-        >
-          Автомобілі
-        </button>
-
-        <button
-          style={getDetailsTabButtonStyle("routes")}
-          onClick={() => setDetailsTab("routes")}
-        >
-          Маршрути
-        </button>
-
-        <button
-          style={getDetailsTabButtonStyle("fuel")}
-          onClick={() => setDetailsTab("fuel")}
-        >
-          Заправки
-        </button>
-      </div>
-
-      {detailsTab === "vehicles" && (
-        <>
-          <h3>Призначені автомобілі</h3>
-
-          {vehicles.length === 0 && (
-            <p>До цього водія не призначено автомобілів.</p>
-          )}
-
-          {vehicles.map((vehicle) => (
-            <div
-              key={vehicle.id}
-              style={{
-                border: "1px solid #ccc",
-                padding: "12px",
-                marginBottom: "8px",
-              }}
-            >
-              <strong>
-                {vehicle.brand} {vehicle.model}
-              </strong>
-
-              <p>Номер: {vehicle.licensePlate}</p>
-
-              <p>Статус: {vehicle.isActive ? "Активний" : "Неактивний"}</p>
-
-              <p>
-                Середня витрата пального:{" "}
-                {vehicle.averageFuelConsumption === null ||
-                vehicle.averageFuelConsumption === undefined
-                  ? "Немає даних"
-                  : `${vehicle.averageFuelConsumption} л / 100 км`}
-              </p>
-            </div>
-          ))}
-        </>
-      )}
-
-      {detailsTab === "routes" && (
-        <>
-          <h3>Маршрути</h3>
-
-          <div style={{ marginBottom: "16px" }}>
-            <h4>Фільтр маршрутів за автомобілем</h4>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedVehicleId("all");
-                setRoutesPage(1);
-              }}
-            >
-              Усі автомобілі
-            </button>
-
-            {vehicles.map((vehicle) => (
-              <button
-                key={vehicle.id}
-                type="button"
-                onClick={() => {
-                  setSelectedVehicleId(vehicle.id);
-                  setRoutesPage(1);
-                }}
-                style={{ marginLeft: "8px" }}
-              >
-                {vehicle.brand} {vehicle.model}
-              </button>
-            ))}
-          </div>
-
-          {filteredRouteEntries.length === 0 && <p>Маршрути не знайдено.</p>}
-
-          {pagedRouteEntries.map((route) => (
-            <div
-              key={route.id}
-              style={{
-                border: "1px solid #ccc",
-                padding: "12px",
-                marginBottom: "8px",
-              }}
-            >
-              <p>
-                <strong>Автомобіль:</strong> {getVehicleName(route.vehicleId)}
-              </p>
-
-              <p>
-                <strong>Дата початку:</strong> {formatDate(route.startDate)}
-              </p>
-
-              <p>
-                <strong>Дата завершення:</strong> {formatDate(route.endDate)}
-              </p>
-
-              <p>
-                <strong>Пробіг:</strong> {formatNumber(route.totalDistance)} км
-              </p>
-
-              <p>
-                <strong>Використано пального:</strong>{" "}
-                {formatNumber(route.fuelUsed)} л
-              </p>
-
-              <p>
-                <strong>Дохід компанії:</strong> {formatMoney(route.revenue)}
-              </p>
-
-              <p>
-                <strong>Зарплата водія:</strong>{" "}
-                {formatMoney(route.driverPayment)}
-              </p>
-            </div>
-          ))}
-
-          {totalRoutePages > 1 && (
-            <div>
-              <button
-                disabled={routesPage === 1}
-                onClick={() => setRoutesPage(routesPage - 1)}
-              >
-                Попередня
-              </button>
-
-              <span>
-                {" "}
-                Сторінка {routesPage} з {totalRoutePages}{" "}
-              </span>
-
-              <button
-                disabled={routesPage === totalRoutePages}
-                onClick={() => setRoutesPage(routesPage + 1)}
-              >
-                Наступна
-              </button>
-            </div>
-          )}
-        </>
-      )}
-
-      {detailsTab === "fuel" && (
-        <>
-          <h3>Заправки</h3>
-
-          <div style={{ marginBottom: "16px" }}>
-            <h4>Фільтр за автомобілем</h4>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedFuelVehicleId("all");
-                setFuelPage(1);
-              }}
-            >
-              Усі автомобілі
-            </button>
-
-            {vehicles.map((vehicle) => (
-              <button
-                key={vehicle.id}
-                type="button"
-                onClick={() => {
-                  setSelectedFuelVehicleId(vehicle.id);
-                  setFuelPage(1);
-                }}
-                style={{ marginLeft: "8px" }}
-              >
-                {vehicle.brand} {vehicle.model}
-              </button>
-            ))}
-          </div>
-
-          {filteredFuelEntries.length === 0 && <p>Заправки не знайдено.</p>}
-
-          {pagedFuelEntries.map((fuel) => (
-            <div
-              key={fuel.id}
-              style={{
-                border: "1px solid #ccc",
-                padding: "12px",
-                marginBottom: "8px",
-              }}
-            >
-              <p>
-                <strong>Дата:</strong> {formatDate(fuel.date)}
-              </p>
-
-              <p>
-                <strong>Автомобіль:</strong> {getVehicleName(fuel.vehicleId)}
-              </p>
-
-              <p>
-                <strong>Показник одометра:</strong>{" "}
-                {formatNumber(fuel.odometerReading)} км
-              </p>
-
-              <p>
-                <strong>Літри:</strong> {formatNumber(fuel.liters)} л
-              </p>
-
-              <p>
-                <strong>Повний бак:</strong> {fuel.isFullTank ? "Так" : "Ні"}
-              </p>
-
-              <p>
-                <strong>Відстань з попередньої заправки:</strong>{" "}
-                {formatNumber(fuel.distanceSinceLastRefuel)} км
-              </p>
-
-              <p>
-                <strong>Витрата пального:</strong>{" "}
-                {formatNumber(fuel.fuelConsumption)} л / 100 км
-              </p>
-            </div>
-          ))}
-
-          {totalFuelPages > 1 && (
-            <div>
-              <button
-                disabled={fuelPage === 1}
-                onClick={() => setFuelPage(fuelPage - 1)}
-              >
-                Попередня
-              </button>
-
-              <span>
-                {" "}
-                Сторінка {fuelPage} з {totalFuelPages}{" "}
-              </span>
-
-              <button
-                disabled={fuelPage === totalFuelPages}
-                onClick={() => setFuelPage(fuelPage + 1)}
-              >
-                Наступна
-              </button>
-            </div>
-          )}
-        </>
+      {isStatusModalOpen && (
+        <DriverStatusModal
+          driverName={driver.name}
+          isActive={driver.isActive}
+          isSubmitting={isChangingStatus}
+          errorMessage={statusErrorMessage}
+          onClose={() => {
+            if (!isChangingStatus) {
+              setIsStatusModalOpen(false);
+              setStatusErrorMessage("");
+            }
+          }}
+          onConfirm={handleConfirmDriverStatus}
+        />
       )}
     </div>
   );

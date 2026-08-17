@@ -1,0 +1,611 @@
+.driver-entries-panel {
+  padding: 20px;
+}
+
+.driver-entries-list {
+  overflow: hidden;
+  border: 1px solid #e4e7ed;
+  border-radius: 11px;
+}
+
+.driver-entry-row {
+  display: grid;
+  grid-template-columns: 44px minmax(210px, 1.2fr) minmax(145px, 0.7fr) minmax(145px, 0.7fr) auto 22px;
+  gap: 16px;
+  min-height: 92px;
+  align-items: center;
+  padding: 14px 16px;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.driver-entry-row + .driver-entry-row {
+  border-top: 1px solid #e8ebf0;
+}
+
+.driver-entry-row:hover {
+  background: #faf9ff;
+}
+
+.driver-entry-row__icon {
+  display: flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+}
+
+.driver-entry-row__icon--route {
+  background: #efedff;
+  color: #6755f5;
+}
+
+.driver-entry-row__icon--fuel {
+  background: #fff1e6;
+  color: #f97316;
+}
+
+.driver-entry-row__main,
+.driver-entry-metrics {
+  min-width: 0;
+}
+
+.driver-entry-row__main strong,
+.driver-entry-row__main span,
+.driver-entry-row__main small {
+  display: block;
+}
+
+.driver-entry-row__main strong {
+  overflow: hidden;
+  color: #172033;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-entry-row__main span {
+  margin-top: 4px;
+  color: #697386;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.driver-entry-row__main small {
+  overflow: hidden;
+  margin-top: 6px;
+  color: #8a93a3;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-entry-metrics {
+  display: grid;
+  gap: 10px;
+}
+
+.driver-entry-metrics span,
+.driver-entry-metrics strong {
+  display: block;
+}
+
+.driver-entry-metrics span {
+  margin-bottom: 3px;
+  color: #8790a1;
+  font-size: 11px;
+}
+
+.driver-entry-metrics strong {
+  overflow: hidden;
+  color: #273044;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-entry-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.driver-entry-badge--complete {
+  background: #e5f9ec;
+  color: #159653;
+}
+
+.driver-entry-badge--progress {
+  background: #eaf2ff;
+  color: #3978f6;
+}
+
+.driver-entry-badge--neutral {
+  background: #f1f3f6;
+  color: #667085;
+}
+
+.driver-entry-row__arrow {
+  color: #6955f5;
+  transition: transform 0.2s ease;
+}
+
+.driver-entry-row:hover .driver-entry-row__arrow {
+  transform: translateX(3px);
+}
+
+.driver-entry-empty {
+  display: flex;
+  min-height: 210px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #d9dce5;
+  border-radius: 11px;
+  color: #667085;
+  text-align: center;
+}
+
+.driver-entry-empty__icon {
+  display: flex;
+  width: 50px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  background: #efedff;
+  color: #6755f5;
+}
+
+.driver-entry-empty__icon--fuel {
+  background: #fff1e6;
+  color: #f97316;
+}
+
+.driver-entry-empty strong {
+  color: #273044;
+  font-size: 15px;
+}
+
+.driver-entry-empty p {
+  margin: 7px 16px 0;
+  font-size: 13px;
+}
+
+.driver-data-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.driver-data-pagination button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #344054;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.driver-data-pagination button:hover:not(:disabled) {
+  border-color: #a99efb;
+  color: #5f4ced;
+}
+
+.driver-data-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.driver-data-pagination span {
+  color: #697386;
+  font-size: 12px;
+}
+
+@media (max-width: 1200px) {
+  .driver-entry-row {
+    grid-template-columns: 44px minmax(190px, 1.2fr) minmax(135px, 0.8fr) auto 22px;
+  }
+
+  .driver-entry-metrics--secondary {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  .driver-entry-row {
+    grid-template-columns: 42px minmax(0, 1fr) auto 20px;
+    gap: 12px;
+  }
+
+  .driver-entry-metrics {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .driver-entries-panel {
+    padding: 16px;
+  }
+
+  .driver-entry-row {
+    grid-template-columns: 40px minmax(0, 1fr) 20px;
+    padding: 12px;
+  }
+
+  .driver-entry-badge {
+    display: none;
+  }
+
+  .driver-data-pagination span {
+    display: none;
+  }
+
+  .driver-data-pagination button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* Compact routes table */
+
+.driver-route-table {
+  overflow: hidden;
+  border: 1px solid #e4e7ed;
+  border-radius: 11px;
+}
+
+.driver-route-table__head,
+.driver-route-row {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 14px;
+  align-items: center;
+  padding-right: 48px;
+  padding-left: 16px;
+}
+
+.driver-route-table__head {
+  min-height: 42px;
+  border-bottom: 1px solid #e4e7ed;
+  background: #fafbfc;
+  color: #7b8495;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.driver-route-row {
+  position: relative;
+  min-height: 68px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.driver-route-row + .driver-route-row {
+  border-top: 1px solid #e8ebf0;
+}
+
+.driver-route-row:hover {
+  background: #faf9ff;
+}
+
+.driver-route-cell {
+  min-width: 0;
+  overflow: hidden;
+  color: #273044;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-route-cell--name strong,
+.driver-route-cell--vehicle strong,
+.driver-route-cell--vehicle small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-route-cell--name strong {
+  color: #172033;
+  font-size: 14px;
+}
+
+.driver-route-cell--vehicle strong {
+  color: #273044;
+  font-size: 13px;
+}
+
+.driver-route-cell--vehicle small {
+  margin-top: 4px;
+  color: #8790a1;
+  font-size: 11px;
+}
+
+.driver-route-cell--distance,
+.driver-route-cell--fuel,
+.driver-route-cell--revenue,
+.driver-route-cell--salary {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.driver-route-row__arrow {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  color: #6955f5;
+  transform: translateY(-50%);
+  transition: transform 0.2s ease;
+}
+
+.driver-route-row:hover .driver-route-row__arrow {
+  transform: translate(3px, -50%);
+}
+
+@media (max-width: 1200px) {
+  .driver-route-table__head,
+  .driver-route-row {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .driver-route-table__head > :nth-child(7),
+  .driver-route-cell--salary {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  .driver-route-table__head,
+  .driver-route-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .driver-route-table__head > :nth-child(5),
+  .driver-route-table__head > :nth-child(6),
+  .driver-route-table__head > :nth-child(7),
+  .driver-route-cell--fuel,
+  .driver-route-cell--revenue,
+  .driver-route-cell--salary {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .driver-route-table__head {
+    display: none;
+  }
+
+  .driver-route-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    gap: 3px 12px;
+    min-height: 68px;
+    padding: 10px 42px 10px 12px;
+  }
+
+  .driver-route-cell--name {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .driver-route-cell--vehicle {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .driver-route-cell--vehicle strong,
+  .driver-route-cell--vehicle small {
+    display: inline;
+  }
+
+  .driver-route-cell--vehicle small::before {
+    content: " · ";
+  }
+
+  .driver-route-cell--date,
+  .driver-route-cell--fuel,
+  .driver-route-cell--revenue,
+  .driver-route-cell--salary,
+  .driver-route-row .driver-entry-badge {
+    display: none;
+  }
+
+  .driver-route-cell--distance {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+/* Compact fuel entries table */
+
+.driver-fuel-table {
+  overflow: hidden;
+  border: 1px solid #e4e7ed;
+  border-radius: 11px;
+}
+
+.driver-fuel-table__head,
+.driver-fuel-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 14px;
+  align-items: center;
+  padding-right: 48px;
+  padding-left: 16px;
+}
+
+.driver-fuel-table__head {
+  min-height: 42px;
+  border-bottom: 1px solid #e4e7ed;
+  background: #fafbfc;
+  color: #7b8495;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.driver-fuel-row {
+  position: relative;
+  min-height: 68px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.driver-fuel-row + .driver-fuel-row {
+  border-top: 1px solid #e8ebf0;
+}
+
+.driver-fuel-row:hover {
+  background: #fffaf6;
+}
+
+.driver-fuel-cell {
+  min-width: 0;
+  overflow: hidden;
+  color: #273044;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-fuel-cell--vehicle strong,
+.driver-fuel-cell--vehicle small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-fuel-cell--vehicle strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.driver-fuel-cell--vehicle small {
+  margin-top: 4px;
+  color: #8790a1;
+  font-size: 11px;
+}
+
+.driver-fuel-cell--odometer,
+.driver-fuel-cell--liters,
+.driver-fuel-cell--distance,
+.driver-fuel-cell--consumption {
+  font-weight: 650;
+}
+
+.driver-fuel-cell--full-tank {
+  justify-self: start;
+}
+
+.driver-fuel-row__arrow {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  color: #6955f5;
+  transform: translateY(-50%);
+  transition: transform 0.2s ease;
+}
+
+.driver-fuel-row:hover .driver-fuel-row__arrow {
+  transform: translate(3px, -50%);
+}
+
+@media (max-width: 1200px) {
+  .driver-fuel-table__head,
+  .driver-fuel-row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .driver-fuel-table__head > :nth-child(5),
+  .driver-fuel-cell--distance {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  .driver-fuel-table__head,
+  .driver-fuel-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .driver-fuel-table__head > :nth-child(3),
+  .driver-fuel-table__head > :nth-child(5),
+  .driver-fuel-table__head > :nth-child(6),
+  .driver-fuel-cell--odometer,
+  .driver-fuel-cell--distance,
+  .driver-fuel-cell--consumption {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .driver-fuel-table__head {
+    display: none;
+  }
+
+  .driver-fuel-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    gap: 3px 12px;
+    min-height: 68px;
+    padding: 10px 42px 10px 12px;
+  }
+
+  .driver-fuel-cell--vehicle {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .driver-fuel-cell--vehicle strong,
+  .driver-fuel-cell--vehicle small {
+    display: inline;
+  }
+
+  .driver-fuel-cell--vehicle small::before {
+    content: " · ";
+  }
+
+  .driver-fuel-cell--date {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .driver-fuel-cell--liters {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .driver-fuel-cell--odometer,
+  .driver-fuel-cell--distance,
+  .driver-fuel-cell--consumption,
+  .driver-fuel-cell--full-tank {
+    display: none;
+  }
+}

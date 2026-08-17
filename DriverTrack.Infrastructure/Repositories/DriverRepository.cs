@@ -29,6 +29,19 @@ namespace DriverTrack.Infrastructure.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+        public async Task<List<Driver>> GetAllWithActiveVehiclesAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Drivers
+                .AsNoTracking()
+                .Include(driver => driver.Vehicles
+                    .Where(vehicle => vehicle.IsActive)
+                    .OrderBy(vehicle => vehicle.Brand)
+                    .ThenBy(vehicle => vehicle.Model)
+                    .ThenBy(vehicle => vehicle.LicensePlate))
+                .OrderBy(driver => driver.Name)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task AddAsync(Driver driver, CancellationToken cancellationToken = default)
         {
             await _dbContext.Drivers.AddAsync(driver, cancellationToken);
