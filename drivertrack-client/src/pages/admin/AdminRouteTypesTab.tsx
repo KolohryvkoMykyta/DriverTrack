@@ -1,261 +1,234 @@
-import { useEffect, useState } from "react";
-
 import {
-  getRouteTypes,
-  createRouteType,
-  updateRouteType,
-  deleteRouteType,
-  type RouteType,
-} from "../../api/routeTypesApi";
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import { Plus, Search } from "lucide-react";
 
 import { getApiErrorMessage } from "../../api/apiErrorHandler";
+import {
+  deleteRouteType,
+  getRouteTypes,
+  type RouteType,
+} from "../../api/routeTypesApi";
+import { useAdminSidebar } from "../../contexts/AdminSidebarContext";
+
+import DeleteRouteTypeModal from "./route-types/DeleteRouteTypeModal";
+import RouteTypeModal from "./route-types/RouteTypeModal";
+import RouteTypesSummaryCards from "./route-types/RouteTypesSummaryCards";
+import RouteTypesTable from "./route-types/RouteTypesTable";
+
+import "../../styles/admin-route-types.css";
+
+const ROUTE_TYPES_PAGE_SIZE = 5;
 
 function AdminRouteTypesTab() {
+  const { clearSidebarContent } = useAdminSidebar();
+
   const [routeTypes, setRouteTypes] = useState<RouteType[]>([]);
-
-  const [name, setName] = useState("");
-  const [driverPayment, setDriverPayment] = useState("");
-  const [revenue, setRevenue] = useState("");
-
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDriverPayment, setEditDriverPayment] = useState("");
-  const [editRevenue, setEditRevenue] = useState("");
-
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-
-  useEffect(() => {
-    loadRouteTypes();
-  }, []);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingRouteType, setEditingRouteType] =
+    useState<RouteType | null>(null);
+  const [deletingRouteType, setDeletingRouteType] =
+    useState<RouteType | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   async function loadRouteTypes() {
     try {
+      setErrorMessage("");
       const data = await getRouteTypes();
-
       setRouteTypes(
-        [...data].sort((a, b) => a.name.localeCompare(b.name))
+        [...data].sort((a, b) => a.name.localeCompare(b.name, "uk"))
       );
     } catch (error) {
       setErrorMessage(getApiErrorMessage(error));
+    } finally {
+      setIsLoading(false);
     }
   }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    setErrorMessage("");
+  useEffect(() => {
+    clearSidebarContent();
+  }, [clearSidebarContent]);
 
-    if (!name.trim() || !driverPayment || !revenue) {
-      setErrorMessage("Заповніть усі поля.");
-      return;
-    }
+  useEffect(() => {
+    let isCancelled = false;
 
-    try {
-      await createRouteType({
-        name: name.trim(),
-        driverPayment: Number(driverPayment),
-        revenue: Number(revenue),
+    void getRouteTypes()
+      .then((data) => {
+        if (!isCancelled) {
+          setRouteTypes(
+            [...data].sort((a, b) => a.name.localeCompare(b.name, "uk"))
+          );
+          setErrorMessage("");
+        }
+      })
+      .catch((error) => {
+        if (!isCancelled) {
+          setErrorMessage(getApiErrorMessage(error));
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       });
 
-      setName("");
-      setDriverPayment("");
-      setRevenue("");
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
-      await loadRouteTypes();
-    } catch (error) {
-      setErrorMessage(getApiErrorMessage(error));
+  const filteredRouteTypes = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase("uk");
+
+    if (!normalizedQuery) {
+      return routeTypes;
     }
-  }
 
-  function startEdit(routeType: RouteType) {
-    setEditingId(routeType.id);
-    setEditName(routeType.name);
-    setEditDriverPayment(routeType.driverPayment.toString());
-    setEditRevenue(routeType.revenue.toString());
-    setErrorMessage("");
-  }
+    return routeTypes.filter((routeType) =>
+      routeType.name.toLocaleLowerCase("uk").includes(normalizedQuery)
+    );
+  }, [routeTypes, searchQuery]);
 
-  function cancelEdit() {
-    setEditingId(null);
-    setEditName("");
-    setEditDriverPayment("");
-    setEditRevenue("");
-  }
+  const totalPages = Math.ceil(
+    filteredRouteTypes.length / ROUTE_TYPES_PAGE_SIZE
+  );
+  const pagedRouteTypes = filteredRouteTypes.slice(
+    (currentPage - 1) * ROUTE_TYPES_PAGE_SIZE,
+    currentPage * ROUTE_TYPES_PAGE_SIZE
+  );
 
-  async function handleUpdate(id: string) {
-    setErrorMessage("");
+  const averageRevenue =
+    routeTypes.length > 0
+      ? routeTypes.reduce((sum, item) => sum + item.revenue, 0) /
+        routeTypes.length
+      : 0;
+  const averageDriverPayment =
+    routeTypes.length > 0
+      ? routeTypes.reduce((sum, item) => sum + item.driverPayment, 0) /
+        routeTypes.length
+      : 0;
+  const averageRemainder = averageRevenue - averageDriverPayment;
 
-    if (!editName.trim() || !editDriverPayment || !editRevenue) {
-      setErrorMessage("Заповніть усі поля.");
+  async function handleDelete() {
+    if (!deletingRouteType) {
       return;
     }
 
     try {
-      await updateRouteType(id, {
-        name: editName.trim(),
-        driverPayment: Number(editDriverPayment),
-        revenue: Number(editRevenue),
-      });
-
-      cancelEdit();
+      setIsDeleting(true);
+      setDeleteError("");
+      await deleteRouteType(deletingRouteType.id);
+      setDeletingRouteType(null);
       await loadRouteTypes();
+      setCurrentPage(1);
     } catch (error) {
-      setErrorMessage(getApiErrorMessage(error));
-    }
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("Видалити тип маршруту?")) {
-      return;
-    }
-
-    try {
-      await deleteRouteType(id);
-      await loadRouteTypes();
-    } catch (error) {
-      setErrorMessage(getApiErrorMessage(error));
+      setDeleteError(getApiErrorMessage(error));
+    } finally {
+      setIsDeleting(false);
     }
   }
 
   return (
-    <div>
-      <h2>Типи маршрутів</h2>
+    <div className="route-types-page">
+      <section className="route-types-toolbar">
+        <label className="route-types-search">
+          <Search size={18} />
+          <input
+            type="search"
+            value={searchQuery}
+            placeholder="Пошук за назвою"
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </label>
 
-      {errorMessage && (
-        <p style={{ color: "red" }}>
-          {errorMessage}
-        </p>
+        <button
+          type="button"
+          className="route-types-button route-types-button--primary"
+          onClick={() => {
+            setEditingRouteType(null);
+            setIsFormOpen(true);
+          }}
+        >
+          <Plus size={19} />
+          Додати тип
+        </button>
+      </section>
+
+      <RouteTypesSummaryCards
+        count={routeTypes.length}
+        averageRevenue={averageRevenue}
+        averageDriverPayment={averageDriverPayment}
+        averageRemainder={averageRemainder}
+      />
+
+      {isLoading ? (
+        <div className="route-types-page__message">
+          Завантаження типів маршрутів...
+        </div>
+      ) : errorMessage ? (
+        <div className="route-types-page__message route-types-page__message--error">
+          <p>{errorMessage}</p>
+          <button
+            type="button"
+            className="route-types-button route-types-button--secondary"
+            onClick={() => void loadRouteTypes()}
+          >
+            Спробувати ще раз
+          </button>
+        </div>
+      ) : (
+        <RouteTypesTable
+          routeTypes={pagedRouteTypes}
+          totalCount={filteredRouteTypes.length}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          searchQuery={searchQuery}
+          onEdit={(routeType) => {
+            setEditingRouteType(routeType);
+            setIsFormOpen(true);
+          }}
+          onDelete={(routeType) => {
+            setDeleteError("");
+            setDeletingRouteType(routeType);
+          }}
+          onPageChange={setCurrentPage}
+        />
       )}
 
-      <form onSubmit={handleCreate} style={{ marginBottom: "25px" }}>
-        <h3>Додати тип маршруту</h3>
+      {isFormOpen && (
+        <RouteTypeModal
+          routeType={editingRouteType}
+          onClose={() => setIsFormOpen(false)}
+          onSaved={async () => {
+            await loadRouteTypes();
+            setCurrentPage(1);
+          }}
+        />
+      )}
 
-        <div>
-          <label>
-            Назва:
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
-        </div>
-
-        <div>
-          <label>
-            Оплата водію:
-            <input
-              type="number"
-              value={driverPayment}
-              onChange={(e) => setDriverPayment(e.target.value)}
-            />
-          </label>
-        </div>
-
-        <div>
-          <label>
-            Дохід:
-            <input
-              type="number"
-              value={revenue}
-              onChange={(e) => setRevenue(e.target.value)}
-            />
-          </label>
-        </div>
-
-        <button type="submit">
-          Додати тип маршруту
-        </button>
-      </form>
-
-      <h3>Список типів маршрутів</h3>
-
-      {routeTypes.length === 0 ? (
-        <p>Типів маршрутів поки немає.</p>
-      ) : (
-        <div>
-          {routeTypes.map((type) => (
-            <div
-              key={type.id}
-              style={{
-                border: "1px solid #ccc",
-                padding: "15px",
-                marginBottom: "10px",
-              }}
-            >
-              {editingId === type.id ? (
-                <>
-                  <div>
-                    <label>
-                      Назва:
-                      <input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                      />
-                    </label>
-                  </div>
-
-                  <div>
-                    <label>
-                      Оплата водію:
-                      <input
-                        type="number"
-                        value={editDriverPayment}
-                        onChange={(e) =>
-                          setEditDriverPayment(e.target.value)
-                        }
-                      />
-                    </label>
-                  </div>
-
-                  <div>
-                    <label>
-                      Дохід:
-                      <input
-                        type="number"
-                        value={editRevenue}
-                        onChange={(e) => setEditRevenue(e.target.value)}
-                      />
-                    </label>
-                  </div>
-
-                  <button onClick={() => handleUpdate(type.id)}>
-                    Зберегти
-                  </button>
-
-                  <button onClick={cancelEdit}>
-                    Скасувати
-                  </button>
-                </>
-              ) : (
-                <>
-                  <h4>{type.name}</h4>
-
-                  <p>
-                    <strong>Оплата водію:</strong>{" "}
-                    {type.driverPayment} грн
-                  </p>
-
-                  <p>
-                    <strong>Дохід:</strong>{" "}
-                    {type.revenue} грн
-                  </p>
-
-                  <p>
-                    <strong>Прибуток:</strong>{" "}
-                    {type.revenue - type.driverPayment} грн
-                  </p>
-
-                  <button onClick={() => startEdit(type)}>
-                    Редагувати
-                  </button>
-
-                  <button onClick={() => handleDelete(type.id)}>
-                    Видалити
-                  </button>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
+      {deletingRouteType && (
+        <DeleteRouteTypeModal
+          routeType={deletingRouteType}
+          isDeleting={isDeleting}
+          errorMessage={deleteError}
+          onClose={() => {
+            if (!isDeleting) {
+              setDeletingRouteType(null);
+            }
+          }}
+          onConfirm={() => void handleDelete()}
+        />
       )}
     </div>
   );

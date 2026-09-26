@@ -1,218 +1,239 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-import { getDrivers, type Driver } from "../../api/driversApi";
-import { getVehicles, type Vehicle } from "../../api/vehiclesApi";
+import { ArrowLeft, RefreshCw } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { getApiErrorMessage } from "../../api/apiErrorHandler";
+import {
+  getDrivers,
+  type DriverListItem,
+} from "../../api/driversApi";
 import {
   deleteFuelEntry,
   getFuelEntryById,
-  updateFuelEntry,
   type FuelEntry,
 } from "../../api/fuelEntriesApi";
-import { getApiErrorMessage } from "../../api/apiErrorHandler";
+import {
+  getVehicles,
+  type Vehicle,
+} from "../../api/vehiclesApi";
+import { useAdminSidebar } from "../../contexts/AdminSidebarContext";
+
+import DeleteFuelModal from "./fuel-details/DeleteFuelModal";
+import EditFuelModal from "./fuel-details/EditFuelModal";
+import FuelDetailsHeroCard from "./fuel-details/FuelDetailsHeroCard";
+import FuelDetailsInformation from "./fuel-details/FuelDetailsInformation";
+import FuelDetailsSummary from "./fuel-details/FuelDetailsSummary";
+
+import "../../styles/admin-fuel-details.css";
+
+async function fetchFuelDetailsPageData(fuelEntryId: string) {
+  const [entry, drivers, vehicles] = await Promise.all([
+    getFuelEntryById(fuelEntryId),
+    getDrivers(),
+    getVehicles(),
+  ]);
+
+  return { entry, drivers, vehicles };
+}
 
 function FuelDetailsPage() {
   const { fuelEntryId } = useParams();
   const navigate = useNavigate();
+  const { clearSidebarContent } = useAdminSidebar();
 
   const [entry, setEntry] = useState<FuelEntry | null>(null);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [drivers, setDrivers] = useState<DriverListItem[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-
-  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
-  const [date, setDate] = useState("");
-  const [odometerReading, setOdometerReading] = useState("");
-  const [liters, setLiters] = useState("");
-  const [isFullTank, setIsFullTank] = useState(true);
-
-  async function loadData() {
-    if (!fuelEntryId) return;
-
-    const [entryData, driversData, vehiclesData] = await Promise.all([
-      getFuelEntryById(fuelEntryId),
-      getDrivers(),
-      getVehicles(),
-    ]);
-
-    setEntry(entryData);
-    setDrivers(driversData);
-    setVehicles(vehiclesData);
-
-    setDate(entryData.date.slice(0, 16));
-    setOdometerReading(String(entryData.odometerReading));
-    setLiters(String(entryData.liters));
-    setIsFullTank(entryData.isFullTank);
-  }
-
-  useEffect(() => {
-    loadData().catch((error) => {
-      console.error(error);
-      setErrorMessage("Не вдалося завантажити заправку.");
-    });
-  }, [fuelEntryId]);
-
-  function getDriverName(driverId: string) {
-    return drivers.find((driver) => driver.id === driverId)?.name ?? "Невідомий водій";
-  }
-
-  function getVehicleName(vehicleId: string) {
-    const vehicle = vehicles.find((vehicle) => vehicle.id === vehicleId);
-
-    if (!vehicle) {
-      return "Невідомий автомобіль";
+  const loadData = useCallback(async () => {
+    if (!fuelEntryId) {
+      setErrorMessage("Ідентифікатор заправки відсутній.");
+      setIsLoading(false);
+      return;
     }
-
-    return `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})`;
-  }
-
-  function formatDate(value: string) {
-    return new Date(value).toLocaleString("uk-UA");
-  }
-
-  async function handleSave() {
-    if (!fuelEntryId) return;
 
     try {
       setErrorMessage("");
+      const data = await fetchFuelDetailsPageData(fuelEntryId);
 
-      await updateFuelEntry(fuelEntryId, {
-        date,
-        odometerReading: Number(odometerReading),
-        liters: Number(liters),
-        isFullTank,
+      setEntry(data.entry);
+      setDrivers(data.drivers);
+      setVehicles(data.vehicles);
+    } catch (error) {
+      console.error("Не вдалося завантажити заправку:", error);
+      setErrorMessage("Не вдалося завантажити деталі заправки.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fuelEntryId]);
+
+  useEffect(() => {
+    clearSidebarContent();
+  }, [clearSidebarContent]);
+
+  useEffect(() => {
+    if (!fuelEntryId) {
+      const timeoutId = window.setTimeout(() => {
+        setErrorMessage("Ідентифікатор заправки відсутній.");
+        setIsLoading(false);
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    let isCancelled = false;
+
+    void fetchFuelDetailsPageData(fuelEntryId)
+      .then((data) => {
+        if (isCancelled) {
+          return;
+        }
+
+        setEntry(data.entry);
+        setDrivers(data.drivers);
+        setVehicles(data.vehicles);
+        setErrorMessage("");
+      })
+      .catch((error) => {
+        console.error("Не вдалося завантажити заправку:", error);
+
+        if (!isCancelled) {
+          setErrorMessage("Не вдалося завантажити деталі заправки.");
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       });
 
-      setIsEditing(false);
-      await loadData();
-    } catch (error) {
-      setErrorMessage(getApiErrorMessage(error));
-    }
-  }
+    return () => {
+      isCancelled = true;
+    };
+  }, [fuelEntryId]);
+
+  const driverName = useMemo(
+    () =>
+      drivers.find((driver) => driver.id === entry?.driverId)?.name ??
+      "Невідомий водій",
+    [drivers, entry?.driverId]
+  );
+
+  const vehicle = useMemo(
+    () => vehicles.find((item) => item.id === entry?.vehicleId),
+    [vehicles, entry?.vehicleId]
+  );
 
   async function handleDelete() {
-    if (!fuelEntryId) return;
-
-    const confirmed = window.confirm("Видалити цю заправку?");
-    if (!confirmed) return;
+    if (!fuelEntryId) {
+      return;
+    }
 
     try {
+      setIsDeleting(true);
+      setDeleteError("");
       await deleteFuelEntry(fuelEntryId);
-      navigate(-1);
+      navigate("/admin/fuel");
     } catch (error) {
-      setErrorMessage(getApiErrorMessage(error));
+      setDeleteError(getApiErrorMessage(error));
+    } finally {
+      setIsDeleting(false);
     }
   }
 
-  if (!entry) {
-    return <p>Завантаження заправки...</p>;
+  if (isLoading) {
+    return (
+      <div className="fuel-details-message">
+        <RefreshCw className="fuel-details-spinner" size={24} />
+        Завантаження заправки...
+      </div>
+    );
   }
 
+  if (!entry || errorMessage) {
+    return (
+      <div className="fuel-details-page">
+        <Link className="fuel-details-back" to="/admin/fuel">
+          <ArrowLeft size={16} />
+          Заправки
+        </Link>
+
+        <div className="fuel-details-message fuel-details-message--error">
+          <p>{errorMessage || "Заправку не знайдено."}</p>
+          <button type="button" onClick={() => void loadData()}>
+            Спробувати ще раз
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const vehicleName = vehicle
+    ? `${vehicle.brand} ${vehicle.model}`
+    : "Невідомий автомобіль";
+  const licensePlate = vehicle?.licensePlate ?? "Номер відсутній";
+
   return (
-    <div>
-      <button onClick={() => navigate(-1)}>← Назад</button>
+    <div className="fuel-details-page">
+      <Link className="fuel-details-back" to="/admin/fuel">
+        <ArrowLeft size={16} />
+        Заправки
+      </Link>
 
-      <h2>Деталі заправки</h2>
+      <FuelDetailsHeroCard
+        entry={entry}
+        driverName={driverName}
+        vehicleName={vehicleName}
+        licensePlate={licensePlate}
+        onEdit={() => setIsEditOpen(true)}
+        onDelete={() => {
+          setDeleteError("");
+          setIsDeleteOpen(true);
+        }}
+      />
 
-      {errorMessage && (
-        <p style={{ color: "red", whiteSpace: "pre-line" }}>
-          {errorMessage}
-        </p>
+      <FuelDetailsSummary entry={entry} />
+
+      <FuelDetailsInformation
+        entry={entry}
+        driverName={driverName}
+        vehicleName={vehicleName}
+        licensePlate={licensePlate}
+        vehicleAverageConsumption={vehicle?.averageFuelConsumption ?? null}
+      />
+
+      {isEditOpen && (
+        <EditFuelModal
+          entry={entry}
+          onClose={() => setIsEditOpen(false)}
+          onUpdated={loadData}
+        />
       )}
 
-      {!isEditing ? (
-        <>
-          <p>
-            <strong>ID:</strong> {entry.id}
-          </p>
-
-          <p>
-            <strong>Водій:</strong> {getDriverName(entry.driverId)}
-          </p>
-
-          <p>
-            <strong>Автомобіль:</strong> {getVehicleName(entry.vehicleId)}
-          </p>
-
-          <p>
-            <strong>Дата:</strong> {formatDate(entry.date)}
-          </p>
-
-          <p>
-            <strong>Одометр:</strong> {entry.odometerReading} км
-          </p>
-
-          <p>
-            <strong>Літри:</strong> {entry.liters} л
-          </p>
-
-          <p>
-            <strong>Повний бак:</strong> {entry.isFullTank ? "Так" : "Ні"}
-          </p>
-
-          <p>
-            <strong>Пробіг від попередньої заправки:</strong>{" "}
-            {entry.distanceSinceLastRefuel ?? "не розраховано"} км
-          </p>
-
-          <p>
-            <strong>Витрата:</strong>{" "}
-            {entry.fuelConsumption
-              ? `${entry.fuelConsumption.toFixed(2)} л / 100 км`
-              : "не розраховано"}
-          </p>
-
-          <button onClick={() => setIsEditing(true)}>Редагувати</button>
-
-          <button onClick={handleDelete} style={{ marginLeft: "8px" }}>
-            Видалити
-          </button>
-        </>
-      ) : (
-        <>
-          <p>Дата</p>
-          <input
-            type="datetime-local"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-
-          <p>Одометр</p>
-          <input
-            type="number"
-            value={odometerReading}
-            onChange={(e) => setOdometerReading(e.target.value)}
-          />
-
-          <p>Літри</p>
-          <input
-            type="number"
-            step="0.01"
-            value={liters}
-            onChange={(e) => setLiters(e.target.value)}
-          />
-
-          <p>
-            <label>
-              Повний бак:{" "}
-              <input
-                type="checkbox"
-                checked={isFullTank}
-                onChange={(e) => setIsFullTank(e.target.checked)}
-              />
-            </label>
-          </p>
-
-          <button onClick={handleSave}>Зберегти</button>
-
-          <button
-            onClick={() => setIsEditing(false)}
-            style={{ marginLeft: "8px" }}
-          >
-            Скасувати
-          </button>
-        </>
+      {isDeleteOpen && (
+        <DeleteFuelModal
+          vehicleName={vehicleName}
+          isDeleting={isDeleting}
+          errorMessage={deleteError}
+          onClose={() => {
+            if (!isDeleting) {
+              setIsDeleteOpen(false);
+            }
+          }}
+          onConfirm={() => void handleDelete()}
+        />
       )}
     </div>
   );

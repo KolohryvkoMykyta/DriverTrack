@@ -3,5 +3,5 @@ using MediatR;
 
 namespace DriverTrack.Application.Features.RouteEntries.Queries.GetRouteById
 {
-    public record GetRouteByIdQuery(Guid Id) : IRequest<RouteEntryDto>;
+    public record GetRouteByIdQuery(Guid Id) : IRequest<RouteDetailsDto>;
 }

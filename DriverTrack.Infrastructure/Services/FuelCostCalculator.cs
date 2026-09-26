@@ -37,5 +37,20 @@ namespace DriverTrack.Infrastructure.Services
 
             return total;
         }
+
+        public async Task<decimal?> CalculateAsync(
+            double liters,
+            DateTime date,
+            CancellationToken cancellationToken = default)
+        {
+            var fuelPrice = await _fuelPriceRepository.GetCurrentPriceAsync(
+                date,
+                cancellationToken);
+
+            if (fuelPrice is null)
+                return null;
+
+            return (decimal)liters * fuelPrice.PricePerLiter;
+        }
     }
 }

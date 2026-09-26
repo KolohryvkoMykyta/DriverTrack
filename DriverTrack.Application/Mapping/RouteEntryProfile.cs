@@ -9,6 +9,7 @@ namespace DriverTrack.Application.Mapping
         public RouteEntryProfile()
         {
             CreateMap<RouteEntry, RouteEntryDto>();
+            CreateMap<RouteEntry, RouteDetailsDto>();
         }
     }
 }

@@ -1,455 +1,510 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-import { getDrivers, type Driver } from "../../api/driversApi";
-import { getVehicles, type Vehicle } from "../../api/vehiclesApi";
 import {
-  createFullRoute,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Plus,
+} from "lucide-react";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  getDrivers,
+  type DriverListItem,
+} from "../../api/driversApi";
+
+import {
   getRouteEntries,
   type RouteEntry,
 } from "../../api/routeEntriesApi";
-import { getRouteTypes, type RouteType } from "../../api/routeTypesApi";
-import { getApiErrorMessage } from "../../api/apiErrorHandler";
+
+import {
+  getRouteTypes,
+  type RouteType,
+} from "../../api/routeTypesApi";
+
+import {
+  getVehicles,
+  type Vehicle,
+} from "../../api/vehiclesApi";
+
+import {
+  useAdminSidebar,
+} from "../../contexts/AdminSidebarContext";
+
+import CreateRouteModal from "./routes/CreateRouteModal";
+
+import RoutesFilters, {
+  type RoutesPeriodMode,
+} from "./routes/RoutesFilters";
+
+import RoutesSummaryCards from "./routes/RoutesSummaryCards";
+import RoutesTable from "./routes/RoutesTable";
+
+import "../../styles/admin-routes.css";
 
 const ROUTES_PAGE_SIZE = 5;
 
 function AdminRoutesTab() {
   const navigate = useNavigate();
 
-  const [routeEntries, setRouteEntries] = useState<RouteEntry[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [routeTypes, setRouteTypes] = useState<RouteType[]>([]);
+  const {
+    setSidebarContent,
+    clearSidebarContent,
+  } = useAdminSidebar();
 
-  const [selectedDriverId, setSelectedDriverId] = useState("all");
-  const [selectedVehicleId, setSelectedVehicleId] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [routeEntries, setRouteEntries] =
+    useState<RouteEntry[]>([]);
 
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [drivers, setDrivers] =
+    useState<DriverListItem[]>([]);
 
-  const [newDriverId, setNewDriverId] = useState("");
-  const [newVehicleId, setNewVehicleId] = useState("");
-  const [newRouteTypeId, setNewRouteTypeId] = useState("");
-  const [newStartDate, setNewStartDate] = useState("");
-  const [newEndDate, setNewEndDate] = useState("");
-  const [newStartOdometer, setNewStartOdometer] = useState("");
-  const [newEndOdometer, setNewEndOdometer] = useState("");
-  const [newTotalDistance, setNewTotalDistance] = useState("");
+  const [vehicles, setVehicles] =
+    useState<Vehicle[]>([]);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [createErrorMessage, setCreateErrorMessage] = useState("");
+  const [routeTypes, setRouteTypes] =
+    useState<RouteType[]>([]);
 
-  async function loadData() {
-    const [routeEntries, drivers, vehicles, routeTypes] = await Promise.all([
-      getRouteEntries(),
-      getDrivers(),
-      getVehicles(),
-      getRouteTypes(),
-    ]);
+  const [periodMode, setPeriodMode] =
+    useState<RoutesPeriodMode>("all");
 
-    setRouteEntries(routeEntries);
-    setDrivers(drivers);
-    setVehicles(vehicles);
-    setRouteTypes(routeTypes);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  const [
+    selectedDriverId,
+    setSelectedDriverId,
+  ] = useState("all");
+
+  const [
+    selectedVehicleId,
+    setSelectedVehicleId,
+  ] = useState("all");
+
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const [
+    showCreateModal,
+    setShowCreateModal,
+  ] = useState(false);
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
+
+  async function reloadRoutes() {
+    try {
+      setErrorMessage("");
+
+      const loadedRoutes =
+        await getRouteEntries();
+
+      setRouteEntries(loadedRoutes);
+    } catch (error) {
+      console.error(
+        "Не вдалося завантажити маршрути:",
+        error
+      );
+
+      setErrorMessage(
+        "Не вдалося завантажити список маршрутів."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
+    let isCancelled = false;
+
     async function loadInitialData() {
       try {
-        setIsLoading(true);
-        setErrorMessage("");
+        const [
+          loadedRoutes,
+          loadedDrivers,
+          loadedVehicles,
+          loadedRouteTypes,
+        ] = await Promise.all([
+          getRouteEntries(),
+          getDrivers(),
+          getVehicles(),
+          getRouteTypes(),
+        ]);
 
-        await loadData();
+        if (!isCancelled) {
+          setRouteEntries(loadedRoutes);
+          setDrivers(loadedDrivers);
+          setVehicles(loadedVehicles);
+          setRouteTypes(
+            loadedRouteTypes
+          );
+        }
       } catch (error) {
-        console.error("Failed to load routes:", error);
-        setErrorMessage("Не вдалося завантажити маршрути.");
+        console.error(
+          "Не вдалося завантажити маршрути:",
+          error
+        );
+
+        if (!isCancelled) {
+          setErrorMessage(
+            "Не вдалося завантажити список маршрутів."
+          );
+        }
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadInitialData();
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
-  function updateTotalDistance(startValue: string, endValue: string) {
-    const start = Number(startValue);
-    const end = Number(endValue);
+  const availableVehicles = useMemo(
+    () => {
+      if (
+        selectedDriverId === "all"
+      ) {
+        return vehicles;
+      }
 
-    if (!startValue || !endValue || end < start) {
-      return;
-    }
+      const driverVehicleIds =
+        new Set(
+          routeEntries
+            .filter(
+              (route) =>
+                route.driverId ===
+                selectedDriverId
+            )
+            .map(
+              (route) =>
+                route.vehicleId
+            )
+        );
 
-    setNewTotalDistance(String(end - start));
-  }
-
-  async function handleCreateRoute() {
-    if (
-      !newDriverId ||
-      !newVehicleId ||
-      !newRouteTypeId ||
-      !newStartDate ||
-      !newEndDate ||
-      !newStartOdometer ||
-      !newEndOdometer ||
-      !newTotalDistance
-    ) {
-      setCreateErrorMessage("Заповніть усі поля маршруту.");
-      return;
-    }
-
-    setCreateErrorMessage("");
-
-    try {
-      await createFullRoute({
-        driverId: newDriverId,
-        vehicleId: newVehicleId,
-        routeTypeId: newRouteTypeId,
-        startDate: newStartDate,
-        startOdometer: Number(newStartOdometer),
-        endDate: newEndDate,
-        endOdometer: Number(newEndOdometer),
-        totalDistance: Number(newTotalDistance),
-      });
-
-      setNewDriverId("");
-      setNewVehicleId("");
-      setNewRouteTypeId("");
-      setNewStartDate("");
-      setNewEndDate("");
-      setNewStartOdometer("");
-      setNewEndOdometer("");
-      setNewTotalDistance("");
-
-      setShowCreateForm(false);
-      setCurrentPage(1);
-
-      await loadData();
-    } catch (error) {
-      console.error("Failed to create route:", error);
-      setCreateErrorMessage(getApiErrorMessage(error));
-    }
-  }
-
-  const getDriverName = (driverId: string) => {
-    const driver = drivers.find((driver) => driver.id === driverId);
-    return driver?.name ?? "Невідомий водій";
-  };
-
-  const getVehicleName = (vehicleId: string) => {
-    const vehicle = vehicles.find((vehicle) => vehicle.id === vehicleId);
-
-    if (!vehicle) {
-      return "Невідомий автомобіль";
-    }
-
-    return `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})`;
-  };
-
-  const getRouteTypeName = (routeTypeId: string) => {
-    const routeType = routeTypes.find(
-      (routeType) => routeType.id === routeTypeId
-    );
-
-    return routeType?.name ?? "Невідомий тип маршруту";
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) {
-      return "Не завершено";
-    }
-
-    return new Date(dateString).toLocaleString("uk-UA");
-  };
-
-  const filteredVehiclesForFilter =
-    selectedDriverId === "all"
-      ? vehicles
-      : vehicles.filter((vehicle) => vehicle.driverId === selectedDriverId);
-
-  const filteredVehiclesForCreate = newDriverId
-    ? vehicles.filter((vehicle) => vehicle.driverId === newDriverId)
-    : vehicles;
-
-  const filteredRouteEntries = routeEntries.filter((route) => {
-    const matchesDriver =
-      selectedDriverId === "all" || route.driverId === selectedDriverId;
-
-    const matchesVehicle =
-      selectedVehicleId === "all" || route.vehicleId === selectedVehicleId;
-
-    return matchesDriver && matchesVehicle;
-  });
-
-  const sortedRouteEntries = [...filteredRouteEntries].sort(
-    (a, b) =>
-      new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+      return vehicles.filter(
+        (vehicle) =>
+          driverVehicleIds.has(
+            vehicle.id
+          )
+      );
+    },
+    [
+      routeEntries,
+      vehicles,
+      selectedDriverId,
+    ]
   );
 
-  const totalPages = Math.ceil(sortedRouteEntries.length / ROUTES_PAGE_SIZE);
+  useEffect(() => {
+    setSidebarContent(
+      <RoutesFilters
+        periodMode={periodMode}
+        from={from}
+        to={to}
+        drivers={drivers}
+        vehicles={availableVehicles}
+        selectedDriverId={
+          selectedDriverId
+        }
+        selectedVehicleId={
+          selectedVehicleId
+        }
+        isLoading={isLoading}
+        onPeriodModeChange={(mode) => {
+          setPeriodMode(mode);
+          setCurrentPage(1);
+        }}
+        onFromChange={(value) => {
+          setFrom(value);
+          setCurrentPage(1);
+        }}
+        onToChange={(value) => {
+          setTo(value);
+          setCurrentPage(1);
+        }}
+        onDriverChange={(value) => {
+          setSelectedDriverId(value);
+          setSelectedVehicleId("all");
+          setCurrentPage(1);
+        }}
+        onVehicleChange={(value) => {
+          setSelectedVehicleId(value);
+          setCurrentPage(1);
+        }}
+      />
+    );
 
-  const pagedRouteEntries = sortedRouteEntries.slice(
-    (currentPage - 1) * ROUTES_PAGE_SIZE,
+    return () => {
+      clearSidebarContent();
+    };
+  }, [
+    periodMode,
+    from,
+    to,
+    drivers,
+    availableVehicles,
+    selectedDriverId,
+    selectedVehicleId,
+    isLoading,
+    setSidebarContent,
+    clearSidebarContent,
+  ]);
+
+  function getDateString(date: Date) {
+    return date
+      .toISOString()
+      .split("T")[0];
+  }
+
+  function getPeriodDates(
+    mode: RoutesPeriodMode
+  ) {
+    const today = new Date();
+
+    if (mode === "all") {
+      return {
+        from: undefined,
+        to: undefined,
+      };
+    }
+
+    if (mode === "week") {
+      const currentDay = today.getDay();
+
+      const mondayOffset =
+        currentDay === 0
+          ? -6
+          : 1 - currentDay;
+
+      const monday = new Date(today);
+
+      monday.setDate(
+        today.getDate() + mondayOffset
+      );
+
+      return {
+        from: getDateString(monday),
+        to: getDateString(today),
+      };
+    }
+
+    if (mode === "month") {
+      const firstDayOfMonth = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      );
+
+      return {
+        from: getDateString(
+          firstDayOfMonth
+        ),
+        to: getDateString(today),
+      };
+    }
+
+    return {
+      from: from || undefined,
+      to: to || undefined,
+    };
+  }
+
+  function isDateInSelectedPeriod(
+    dateValue: string
+  ) {
+    const periodDates =
+      getPeriodDates(periodMode);
+
+    const date = new Date(dateValue);
+
+    if (periodDates.from) {
+      const fromDate = new Date(
+        periodDates.from
+      );
+
+      fromDate.setHours(0, 0, 0, 0);
+
+      if (date < fromDate) {
+        return false;
+      }
+    }
+
+    if (periodDates.to) {
+      const toDate = new Date(
+        periodDates.to
+      );
+
+      toDate.setHours(23, 59, 59, 999);
+
+      if (date > toDate) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  const filteredRoutes =
+    routeEntries.filter((route) => {
+      const matchesPeriod =
+        isDateInSelectedPeriod(
+          route.startDate
+        );
+
+      const matchesDriver =
+        selectedDriverId === "all" ||
+        route.driverId ===
+          selectedDriverId;
+
+      const matchesVehicle =
+        selectedVehicleId === "all" ||
+        route.vehicleId ===
+          selectedVehicleId;
+
+      return (
+        matchesPeriod &&
+        matchesDriver &&
+        matchesVehicle
+      );
+    });
+
+  const sortedRoutes = [
+    ...filteredRoutes,
+  ].sort(
+    (a, b) =>
+      new Date(b.startDate).getTime() -
+      new Date(a.startDate).getTime()
+  );
+
+  const totalPages = Math.ceil(
+    sortedRoutes.length /
+      ROUTES_PAGE_SIZE
+  );
+
+  const pagedRoutes = sortedRoutes.slice(
+    (currentPage - 1) *
+      ROUTES_PAGE_SIZE,
     currentPage * ROUTES_PAGE_SIZE
   );
 
-  if (isLoading) {
-    return <p>Завантаження маршрутів...</p>;
-  }
+  const summaryDistance =
+    filteredRoutes.reduce(
+      (sum, route) =>
+        sum +
+        (route.totalDistance ?? 0),
+      0
+    );
+
+  const summaryFuelUsed =
+    filteredRoutes.reduce(
+      (sum, route) =>
+        sum + (route.fuelUsed ?? 0),
+      0
+    );
+
+  const summaryRevenue =
+    filteredRoutes.reduce(
+      (sum, route) =>
+        sum + route.revenue,
+      0
+    );
+
+  const summaryDriverPayment =
+    filteredRoutes.reduce(
+      (sum, route) =>
+        sum + route.driverPayment,
+      0
+    );
 
   return (
-    <div>
-      <h2>Маршрути</h2>
-
-      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-
-      <button onClick={() => setShowCreateForm(true)}>
-        Додати маршрут
-      </button>
-
-      {showCreateForm && (
-        <div
-          style={{
-            border: "1px solid #ccc",
-            padding: "12px",
-            marginTop: "12px",
-            marginBottom: "12px",
-          }}
+    <div className="routes-page">
+      <section className="routes-toolbar">
+        <button
+          type="button"
+          className="routes-button routes-button--primary"
+          onClick={() =>
+            setShowCreateModal(true)
+          }
         >
-          <h3>Створення маршруту</h3>
+          <Plus size={19} />
 
-          <p>Водій</p>
-          <select
-            value={newDriverId}
-            onChange={(e) => {
-              setNewDriverId(e.target.value);
-              setNewVehicleId("");
-              setCreateErrorMessage("");
-            }}
-          >
-            <option value="">Оберіть водія</option>
-            {drivers.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {driver.name}
-              </option>
-            ))}
-          </select>
+          Додати маршрут
+        </button>
+      </section>
 
-          <p>Автомобіль</p>
-          <select
-            value={newVehicleId}
-            onChange={(e) => {
-              setNewVehicleId(e.target.value);
-              setCreateErrorMessage("");
-            }}
-          >
-            <option value="">Оберіть автомобіль</option>
-            {filteredVehiclesForCreate.map((vehicle) => (
-              <option key={vehicle.id} value={vehicle.id}>
-                {vehicle.brand} {vehicle.model} ({vehicle.licensePlate})
-              </option>
-            ))}
-          </select>
+      <RoutesSummaryCards
+        routeCount={
+          filteredRoutes.length
+        }
+        distance={summaryDistance}
+        fuelUsed={summaryFuelUsed}
+        revenue={summaryRevenue}
+        driverPayment={
+          summaryDriverPayment
+        }
+      />
 
-          <p>Тип маршруту</p>
-          <select
-            value={newRouteTypeId}
-            onChange={(e) => {
-              setNewRouteTypeId(e.target.value);
-              setCreateErrorMessage("");
-            }}
-          >
-            <option value="">Оберіть тип маршруту</option>
-            {routeTypes.map((routeType) => (
-              <option key={routeType.id} value={routeType.id}>
-                {routeType.name}
-              </option>
-            ))}
-          </select>
-
-          <p>Дата початку</p>
-          <input
-            type="datetime-local"
-            value={newStartDate}
-            onChange={(e) => {
-              setNewStartDate(e.target.value);
-              setCreateErrorMessage("");
-            }}
-          />
-
-          <p>Дата завершення</p>
-          <input
-            type="datetime-local"
-            value={newEndDate}
-            onChange={(e) => {
-              setNewEndDate(e.target.value);
-              setCreateErrorMessage("");
-            }}
-          />
-
-          <p>Початковий одометр</p>
-          <input
-            type="number"
-            value={newStartOdometer}
-            onChange={(e) => {
-              setNewStartOdometer(e.target.value);
-              updateTotalDistance(e.target.value, newEndOdometer);
-              setCreateErrorMessage("");
-            }}
-          />
-
-          <p>Кінцевий одометр</p>
-          <input
-            type="number"
-            value={newEndOdometer}
-            onChange={(e) => {
-              setNewEndOdometer(e.target.value);
-              updateTotalDistance(newStartOdometer, e.target.value);
-              setCreateErrorMessage("");
-            }}
-          />
-
-          <p>Загальна відстань</p>
-          <input
-            type="number"
-            value={newTotalDistance}
-            onChange={(e) => {
-              setNewTotalDistance(e.target.value);
-              setCreateErrorMessage("");
-            }}
-          />
-
-          {createErrorMessage && (
-            <p style={{ color: "red", whiteSpace: "pre-line" }}>
-              {createErrorMessage}
-            </p>
-          )}
-
-          <br />
-
-          <button onClick={handleCreateRoute}>Створити</button>
+      {isLoading ? (
+        <div className="routes-page__message">
+          Завантаження маршрутів...
+        </div>
+      ) : errorMessage ? (
+        <div className="routes-page__message routes-page__message--error">
+          <p>{errorMessage}</p>
 
           <button
-            onClick={() => {
-              setShowCreateForm(false);
-              setCreateErrorMessage("");
-            }}
-            style={{ marginLeft: "8px" }}
+            type="button"
+            className="routes-button routes-button--secondary"
+            onClick={reloadRoutes}
           >
-            Скасувати
+            Спробувати ще раз
           </button>
         </div>
+      ) : (
+        <RoutesTable
+          routes={pagedRoutes}
+          drivers={drivers}
+          vehicles={vehicles}
+          routeTypes={routeTypes}
+          totalCount={
+            filteredRoutes.length
+          }
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onOpenRoute={(route) =>
+            navigate(
+              `/admin/routes/${route.id}`
+            )
+          }
+          onPageChange={setCurrentPage}
+        />
       )}
 
-      <div style={{ marginBottom: "16px", marginTop: "16px" }}>
-        <label>
-          Фільтр за водієм:{" "}
-          <select
-            value={selectedDriverId}
-            onChange={(e) => {
-              setSelectedDriverId(e.target.value);
-              setSelectedVehicleId("all");
-              setCurrentPage(1);
-            }}
-          >
-            <option value="all">Усі водії</option>
-            {drivers.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {driver.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label style={{ marginLeft: "12px" }}>
-          Фільтр за автомобілем:{" "}
-          <select
-            value={selectedVehicleId}
-            onChange={(e) => {
-              setSelectedVehicleId(e.target.value);
-              setCurrentPage(1);
-            }}
-          >
-            <option value="all">Усі автомобілі</option>
-            {filteredVehiclesForFilter.map((vehicle) => (
-              <option key={vehicle.id} value={vehicle.id}>
-                {vehicle.brand} {vehicle.model} ({vehicle.licensePlate})
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      {sortedRouteEntries.length === 0 && <p>Маршрути не знайдено.</p>}
-
-      {pagedRouteEntries.map((route) => (
-        <div
-          key={route.id}
-          onClick={() => navigate(`/admin/routes/${route.id}`)}
-          style={{
-            border: "1px solid #ccc",
-            padding: "12px",
-            marginBottom: "8px",
-            cursor: "pointer",
+      {showCreateModal && (
+        <CreateRouteModal
+          drivers={drivers}
+          vehicles={vehicles}
+          routeTypes={routeTypes}
+          onClose={() =>
+            setShowCreateModal(false)
+          }
+          onCreated={async () => {
+            await reloadRoutes();
+            setCurrentPage(1);
           }}
-        >
-          <p>
-            <strong>{formatDate(route.startDate)}</strong>
-          </p>
-
-          <p>
-            <strong>Водій:</strong> {getDriverName(route.driverId)}
-          </p>
-
-          <p>
-            <strong>Автомобіль:</strong> {getVehicleName(route.vehicleId)}
-          </p>
-
-          <p>
-            <strong>Тип маршруту:</strong>{" "}
-            {getRouteTypeName(route.routeTypeId)}
-          </p>
-
-          <p>
-            <strong>Відстань:</strong>{" "}
-            {route.totalDistance ?? "не розраховано"} км
-          </p>
-
-          <p>
-            <strong>Пальне:</strong>{" "}
-            {route.fuelUsed ?? "не розраховано"} л
-          </p>
-
-          <p>
-            <strong>Виручка:</strong> {route.revenue} ₴
-          </p>
-
-          <p>
-            <strong>Оплата водію:</strong> {route.driverPayment} ₴
-          </p>
-        </div>
-      ))}
-
-      {totalPages > 1 && (
-        <div style={{ marginTop: "16px" }}>
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((page) => page - 1)}
-          >
-            Назад
-          </button>
-
-          <span style={{ margin: "0 12px" }}>
-            Сторінка {currentPage} з {totalPages}
-          </span>
-
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((page) => page + 1)}
-          >
-            Вперед
-          </button>
-        </div>
+        />
       )}
     </div>
   );

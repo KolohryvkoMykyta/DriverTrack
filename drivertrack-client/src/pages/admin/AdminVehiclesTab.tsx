@@ -1,261 +1,207 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useEffect,
+  useState,
+} from "react";
 
-import { getDrivers, type Driver } from "../../api/driversApi";
+import {
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  CarFront,
+  Plus,
+} from "lucide-react";
+
+import {
+  getDrivers,
+  type DriverListItem,
+} from "../../api/driversApi";
+
 import {
   getVehicles,
-  createVehicle,
   type Vehicle,
 } from "../../api/vehiclesApi";
-import { getApiErrorMessage } from "../../api/apiErrorHandler";
+
+import CreateVehicleModal from "./vehicles/CreateVehicleModal";
+import VehiclesSummaryCards from "./vehicles/VehiclesSummaryCards";
+import VehiclesTable from "./vehicles/VehiclesTable";
+
+import "../../styles/admin-vehicles.css";
 
 function AdminVehiclesTab() {
   const navigate = useNavigate();
 
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [vehicles, setVehicles] =
+    useState<Vehicle[]>([]);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showInactive, setShowInactive] = useState(false);
+  const [drivers, setDrivers] =
+    useState<DriverListItem[]>([]);
 
-  const [brand, setBrand] = useState("");
-  const [model, setModel] = useState("");
-  const [licensePlate, setLicensePlate] = useState("");
-  const [selectedDriverId, setSelectedDriverId] = useState("");
+  const [showInactive, setShowInactive] =
+    useState(false);
+
+  const [showCreateModal, setShowCreateModal] =
+    useState(false);
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
   async function loadVehicles() {
-    const vehicles = await getVehicles();
-    setVehicles(vehicles);
-  }
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setIsLoading(true);
-        setErrorMessage("");
-
-        const [vehiclesData, driversData] = await Promise.all([
-          getVehicles(),
-          getDrivers(),
-        ]);
-
-        setVehicles(vehiclesData);
-        setDrivers(driversData);
-      } catch (error) {
-        console.error("Failed to load vehicles:", error);
-        setErrorMessage("Не вдалося завантажити автомобілі.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadData();
-  }, []);
-
-  async function handleCreateVehicle() {
     try {
       setErrorMessage("");
 
-      await createVehicle({
-        brand,
-        model,
-        licensePlate,
-        driverId: selectedDriverId || null,
-      });
+      const loadedVehicles =
+        await getVehicles();
 
-      setBrand("");
-      setModel("");
-      setLicensePlate("");
-      setSelectedDriverId("");
-      setShowCreateForm(false);
-
-      await loadVehicles();
+      setVehicles(loadedVehicles);
     } catch (error) {
-      setErrorMessage(getApiErrorMessage(error));
+      console.error(
+        "Не вдалося завантажити автомобілі:",
+        error
+      );
+
+      setErrorMessage(
+        "Не вдалося завантажити список автомобілів."
+      );
+    } finally {
+      setIsLoading(false);
     }
   }
 
-  function handleOpenVehicleDetails(vehicle: Vehicle) {
-    navigate(`/admin/vehicles/${vehicle.id}`);
-  }
+  useEffect(() => {
+    let isCancelled = false;
 
-  function getDriverName(driverId: string | null) {
-    if (driverId === null) {
-      return "Не призначено";
+    async function loadInitialData() {
+      try {
+        const [loadedVehicles, loadedDrivers] =
+          await Promise.all([
+            getVehicles(),
+            getDrivers(),
+          ]);
+
+        if (!isCancelled) {
+          setVehicles(loadedVehicles);
+          setDrivers(loadedDrivers);
+        }
+      } catch (error) {
+        console.error(
+          "Не вдалося завантажити автомобілі:",
+          error
+        );
+
+        if (!isCancelled) {
+          setErrorMessage(
+            "Не вдалося завантажити список автомобілів."
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
     }
 
-    const driver = drivers.find((driver) => driver.id === driverId);
+    loadInitialData();
 
-    return driver?.name ?? "Невідомий водій";
-  }
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
-  function getStatusText(isActive: boolean) {
-    return isActive ? "Активний" : "Неактивний";
-  }
+  const activeVehicles = vehicles.filter(
+    (vehicle) => vehicle.isActive
+  );
 
-  function getAverageFuelConsumptionText(value: number | null) {
-    if (value === null || value === undefined) {
-      return "Немає даних";
-    }
+  const inactiveVehicles = vehicles.filter(
+    (vehicle) => !vehicle.isActive
+  );
 
-    return `${value} л / 100 км`;
-  }
-
-  const activeVehicles = vehicles.filter((vehicle) => vehicle.isActive);
-  const inactiveVehicles = vehicles.filter((vehicle) => !vehicle.isActive);
-
-  if (isLoading) {
-    return <p>Завантаження автомобілів...</p>;
-  }
+  const visibleVehicles = showInactive
+    ? inactiveVehicles
+    : activeVehicles;
 
   return (
-    <div>
-      <h2>Автомобілі</h2>
-
-      <div>
-        <button onClick={() => setShowCreateForm(!showCreateForm)}>
-          {showCreateForm ? "Скасувати" : "Додати автомобіль"}
-        </button>
-
-        <button onClick={() => setShowInactive(!showInactive)}>
-          {showInactive
-            ? "Приховати неактивні автомобілі"
-            : "Показати неактивні автомобілі"}
-        </button>
-      </div>
-
-      {showCreateForm && (
-        <div
-          style={{
-            border: "1px solid #ccc",
-            padding: "12px",
-            marginTop: "12px",
-            marginBottom: "12px",
-          }}
+    <div className="vehicles-page">
+      <section className="vehicles-toolbar">
+        <button
+          type="button"
+          className="vehicles-button vehicles-button--primary"
+          onClick={() =>
+            setShowCreateModal(true)
+          }
         >
-          <h3>Створення автомобіля</h3>
+          <Plus size={19} />
 
-          <p>Марка</p>
-          <input
-            type="text"
-            value={brand}
-            onChange={(event) => setBrand(event.target.value)}
-          />
+          Додати автомобіль
+        </button>
 
-          <p>Модель</p>
-          <input
-            type="text"
-            value={model}
-            onChange={(event) => setModel(event.target.value)}
-          />
+        <button
+          type="button"
+          className="vehicles-button vehicles-button--secondary"
+          onClick={() =>
+            setShowInactive(
+              (current) => !current
+            )
+          }
+        >
+          <CarFront size={19} />
 
-          <p>Державний номер</p>
-          <input
-            type="text"
-            value={licensePlate}
-            onChange={(event) => setLicensePlate(event.target.value)}
-          />
+          {showInactive
+            ? "Активні автомобілі"
+            : "Неактивні автомобілі"}
+        </button>
+      </section>
 
-          <p>Водій</p>
-          <select
-            value={selectedDriverId}
-            onChange={(event) => setSelectedDriverId(event.target.value)}
-          >
-            <option value="">Не призначено</option>
+      <VehiclesSummaryCards
+        totalCount={vehicles.length}
+        activeCount={activeVehicles.length}
+        inactiveCount={inactiveVehicles.length}
+      />
 
-            {drivers.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {driver.name}
-              </option>
-            ))}
-          </select>
-
-          <br />
-          <br />
-
-          <button onClick={handleCreateVehicle}>Створити</button>
+      {isLoading ? (
+        <div className="vehicles-page__message">
+          Завантаження автомобілів...
+        </div>
+      ) : errorMessage ? (
+        <div className="vehicles-page__message vehicles-page__message--error">
+          <p>{errorMessage}</p>
 
           <button
-            onClick={() => setShowCreateForm(false)}
-            style={{ marginLeft: "8px" }}
+            type="button"
+            className="vehicles-button vehicles-button--secondary"
+            onClick={loadVehicles}
           >
-            Скасувати
+            Спробувати ще раз
           </button>
         </div>
+      ) : (
+        <VehiclesTable
+          vehicles={visibleVehicles}
+          drivers={drivers}
+          emptyMessage={
+            showInactive
+              ? "Неактивних автомобілів не знайдено."
+              : "Активних автомобілів не знайдено."
+          }
+          onOpenVehicle={(vehicle) =>
+            navigate(
+              `/admin/vehicles/${vehicle.id}`
+            )
+          }
+        />
       )}
 
-      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-
-      <h3>Активні автомобілі</h3>
-
-      {activeVehicles.length === 0 && <p>Активних автомобілів не знайдено.</p>}
-
-      {activeVehicles.map((vehicle) => (
-        <div
-          key={vehicle.id}
-          onClick={() => handleOpenVehicleDetails(vehicle)}
-          style={{
-            border: "1px solid #ccc",
-            padding: "12px",
-            marginBottom: "8px",
-            cursor: "pointer",
-          }}
-        >
-          <strong>
-            {vehicle.brand} {vehicle.model}
-          </strong>
-
-          <p>Номер: {vehicle.licensePlate}</p>
-
-          <p>Статус: {getStatusText(vehicle.isActive)}</p>
-
-          <p>
-            Середня витрата пального:{" "}
-            {getAverageFuelConsumptionText(vehicle.averageFuelConsumption)}
-          </p>
-
-          <p>Водій: {getDriverName(vehicle.driverId)}</p>
-        </div>
-      ))}
-
-      {showInactive && (
-        <>
-          <h3>Неактивні автомобілі</h3>
-
-          {inactiveVehicles.length === 0 && (
-            <p>Неактивних автомобілів не знайдено.</p>
-          )}
-
-          {inactiveVehicles.map((vehicle) => (
-            <div
-              key={vehicle.id}
-              onClick={() => handleOpenVehicleDetails(vehicle)}
-              style={{
-                border: "1px solid #ccc",
-                padding: "12px",
-                marginBottom: "8px",
-                cursor: "pointer",
-              }}
-            >
-              <strong>
-                {vehicle.brand} {vehicle.model}
-              </strong>
-
-              <p>Номер: {vehicle.licensePlate}</p>
-
-              <p>Статус: {getStatusText(vehicle.isActive)}</p>
-
-              <p>
-                Середня витрата пального:{" "}
-                {getAverageFuelConsumptionText(vehicle.averageFuelConsumption)}
-              </p>
-
-              <p>Водій: {getDriverName(vehicle.driverId)}</p>
-            </div>
-          ))}
-        </>
+      {showCreateModal && (
+        <CreateVehicleModal
+          drivers={drivers}
+          onClose={() =>
+            setShowCreateModal(false)
+          }
+          onCreated={loadVehicles}
+        />
       )}
     </div>
   );

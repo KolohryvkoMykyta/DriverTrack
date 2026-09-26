@@ -1,358 +1,352 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { getDrivers, type Driver } from "../../api/driversApi";
-import { getVehicles, type Vehicle } from "../../api/vehiclesApi";
 import {
-  createFuelEntry,
+  getDrivers,
+  type DriverListItem,
+} from "../../api/driversApi";
+import {
   getFuelEntries,
   type FuelEntry,
 } from "../../api/fuelEntriesApi";
-import { getApiErrorMessage } from "../../api/apiErrorHandler";
+import {
+  getVehicles,
+  type Vehicle,
+} from "../../api/vehiclesApi";
+import { useAdminSidebar } from "../../contexts/AdminSidebarContext";
+
+import CreateFuelModal from "./fuel/CreateFuelModal";
+import FuelFilters, {
+  type FuelPeriodMode,
+} from "./fuel/FuelFilters";
+import FuelSummaryCards from "./fuel/FuelSummaryCards";
+import FuelTable from "./fuel/FuelTable";
+
+import "../../styles/admin-fuel.css";
+
+const FUEL_PAGE_SIZE = 5;
 
 function AdminFuelTab() {
-  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const navigate = useNavigate();
+  const { setSidebarContent, clearSidebarContent } =
+    useAdminSidebar();
+
+  const [drivers, setDrivers] = useState<DriverListItem[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [fuelEntries, setFuelEntries] = useState<FuelEntry[]>([]);
-
+  const [periodMode, setPeriodMode] =
+    useState<FuelPeriodMode>("all");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [selectedDriverId, setSelectedDriverId] = useState("all");
   const [selectedVehicleId, setSelectedVehicleId] = useState("all");
-
-  const [showCreateForm, setShowCreateForm] = useState(false);
-
-  const [newDriverId, setNewDriverId] = useState("");
-  const [newVehicleId, setNewVehicleId] = useState("");
-  const [newDate, setNewDate] = useState("");
-  const [newOdometerReading, setNewOdometerReading] = useState("");
-  const [newLiters, setNewLiters] = useState("");
-  const [newIsFullTank, setNewIsFullTank] = useState(true);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [createErrorMessage, setCreateErrorMessage] = useState("");
-  const navigate = useNavigate();
 
-  async function loadData() {
-    const [driversData, vehiclesData, fuelEntriesData] = await Promise.all([
-      getDrivers(),
-      getVehicles(),
-      getFuelEntries(),
-    ]);
-
-    setDrivers(driversData);
-    setVehicles(vehiclesData);
-    setFuelEntries(fuelEntriesData);
+  async function reloadFuelEntries() {
+    try {
+      setErrorMessage("");
+      setFuelEntries(await getFuelEntries());
+    } catch (error) {
+      console.error("Не вдалося завантажити заправки:", error);
+      setErrorMessage("Не вдалося завантажити список заправок.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
+    let isCancelled = false;
+
     async function loadInitialData() {
       try {
-        setIsLoading(true);
-        setErrorMessage("");
+        const [loadedDrivers, loadedVehicles, loadedEntries] =
+          await Promise.all([
+            getDrivers(),
+            getVehicles(),
+            getFuelEntries(),
+          ]);
 
-        await loadData();
+        if (!isCancelled) {
+          setDrivers(loadedDrivers);
+          setVehicles(loadedVehicles);
+          setFuelEntries(loadedEntries);
+        }
       } catch (error) {
-        console.error("Failed to load fuel data:", error);
-        setErrorMessage("Не вдалося завантажити заправки.");
+        console.error("Не вдалося завантажити заправки:", error);
+
+        if (!isCancelled) {
+          setErrorMessage("Не вдалося завантажити список заправок.");
+        }
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadInitialData();
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
-  async function handleCreateFuelEntry() {
-    if (
-      !newDriverId ||
-      !newVehicleId ||
-      !newDate ||
-      !newOdometerReading ||
-      !newLiters
-    ) {
-      setCreateErrorMessage("Заповніть усі поля заправки.");
-      return;
+  const availableVehicles = useMemo(() => {
+    if (selectedDriverId === "all") {
+      return vehicles;
     }
 
-    try {
-      setCreateErrorMessage("");
+    const driverVehicleIds = new Set(
+      fuelEntries
+        .filter((entry) => entry.driverId === selectedDriverId)
+        .map((entry) => entry.vehicleId)
+    );
 
-      await createFuelEntry({
-        driverId: newDriverId,
-        vehicleId: newVehicleId,
-        date: newDate,
-        odometerReading: Number(newOdometerReading),
-        liters: Number(newLiters),
-        isFullTank: newIsFullTank,
-      });
+    return vehicles.filter((vehicle) => driverVehicleIds.has(vehicle.id));
+  }, [fuelEntries, vehicles, selectedDriverId]);
 
-      setNewDriverId("");
-      setNewVehicleId("");
-      setNewDate("");
-      setNewOdometerReading("");
-      setNewLiters("");
-      setNewIsFullTank(true);
+  useEffect(() => {
+    setSidebarContent(
+      <FuelFilters
+        periodMode={periodMode}
+        from={from}
+        to={to}
+        drivers={drivers}
+        vehicles={availableVehicles}
+        selectedDriverId={selectedDriverId}
+        selectedVehicleId={selectedVehicleId}
+        isLoading={isLoading}
+        onPeriodModeChange={(mode) => {
+          setPeriodMode(mode);
+          setCurrentPage(1);
+        }}
+        onFromChange={(value) => {
+          setFrom(value);
+          setCurrentPage(1);
+        }}
+        onToChange={(value) => {
+          setTo(value);
+          setCurrentPage(1);
+        }}
+        onDriverChange={(value) => {
+          setSelectedDriverId(value);
+          setSelectedVehicleId("all");
+          setCurrentPage(1);
+        }}
+        onVehicleChange={(value) => {
+          setSelectedVehicleId(value);
+          setCurrentPage(1);
+        }}
+      />
+    );
 
-      setShowCreateForm(false);
+    return () => {
+      clearSidebarContent();
+    };
+  }, [
+    periodMode,
+    from,
+    to,
+    drivers,
+    availableVehicles,
+    selectedDriverId,
+    selectedVehicleId,
+    isLoading,
+    setSidebarContent,
+    clearSidebarContent,
+  ]);
 
-      await loadData();
-    } catch (error) {
-      console.error("Failed to create fuel entry:", error);
-      setCreateErrorMessage(getApiErrorMessage(error));
+  function getDateString(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function getPeriodDates(mode: FuelPeriodMode) {
+    const today = new Date();
+
+    if (mode === "all") {
+      return { from: undefined, to: undefined };
     }
-  }
 
-  function getDriverName(driverId: string) {
-    return drivers.find((driver) => driver.id === driverId)?.name ?? "Невідомий водій";
-  }
+    if (mode === "week") {
+      const currentDay = today.getDay();
+      const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + mondayOffset);
 
-  function getVehicleName(vehicleId: string) {
-    const vehicle = vehicles.find((vehicle) => vehicle.id === vehicleId);
-
-    if (!vehicle) {
-      return "Невідомий автомобіль";
+      return {
+        from: getDateString(monday),
+        to: getDateString(today),
+      };
     }
 
-    return `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})`;
+    if (mode === "month") {
+      const firstDay = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      );
+
+      return {
+        from: getDateString(firstDay),
+        to: getDateString(today),
+      };
+    }
+
+    return {
+      from: from || undefined,
+      to: to || undefined,
+    };
   }
 
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleString("uk-UA");
+  function isDateInSelectedPeriod(dateValue: string) {
+    const periodDates = getPeriodDates(periodMode);
+    const date = new Date(dateValue);
+
+    if (periodDates.from) {
+      const fromDate = new Date(periodDates.from);
+      fromDate.setHours(0, 0, 0, 0);
+
+      if (date < fromDate) {
+        return false;
+      }
+    }
+
+    if (periodDates.to) {
+      const toDate = new Date(periodDates.to);
+      toDate.setHours(23, 59, 59, 999);
+
+      if (date > toDate) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  const vehiclesForFilter =
-    selectedDriverId === "all"
-      ? vehicles
-      : vehicles.filter((vehicle) => vehicle.driverId === selectedDriverId);
-
-  const vehiclesForCreate = newDriverId
-    ? vehicles.filter((vehicle) => vehicle.driverId === newDriverId)
-    : vehicles;
-
-  const filteredFuelEntries = fuelEntries.filter((entry) => {
+  const filteredEntries = fuelEntries.filter((entry) => {
+    const matchesPeriod = isDateInSelectedPeriod(entry.date);
     const matchesDriver =
       selectedDriverId === "all" || entry.driverId === selectedDriverId;
-
     const matchesVehicle =
       selectedVehicleId === "all" || entry.vehicleId === selectedVehicleId;
 
-    return matchesDriver && matchesVehicle;
+    return matchesPeriod && matchesDriver && matchesVehicle;
   });
 
-  const sortedFuelEntries = [...filteredFuelEntries].sort(
+  const sortedEntries = [...filteredEntries].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+  const totalPages = Math.ceil(sortedEntries.length / FUEL_PAGE_SIZE);
+  const pagedEntries = sortedEntries.slice(
+    (currentPage - 1) * FUEL_PAGE_SIZE,
+    currentPage * FUEL_PAGE_SIZE
+  );
 
-  if (isLoading) {
-    return <p>Завантаження заправок...</p>;
-  }
+  const totalLiters = filteredEntries.reduce(
+    (sum, entry) => sum + entry.liters,
+    0
+  );
+  const fullTankCount = filteredEntries.filter(
+    (entry) => entry.isFullTank
+  ).length;
+  const averageRefuel =
+    filteredEntries.length > 0
+      ? totalLiters / filteredEntries.length
+      : null;
+
+  const calculatedEntries = filteredEntries.filter(
+    (entry) =>
+      entry.distanceSinceLastRefuel !== null &&
+      entry.distanceSinceLastRefuel !== undefined &&
+      entry.distanceSinceLastRefuel > 0 &&
+      entry.fuelConsumption !== null &&
+      entry.fuelConsumption !== undefined
+  );
+  const consumptionDistance = calculatedEntries.reduce(
+    (sum, entry) => sum + (entry.distanceSinceLastRefuel ?? 0),
+    0
+  );
+  const weightedConsumption =
+    consumptionDistance > 0
+      ? calculatedEntries.reduce(
+          (sum, entry) =>
+            sum +
+            (entry.fuelConsumption ?? 0) *
+              (entry.distanceSinceLastRefuel ?? 0),
+          0
+        ) / consumptionDistance
+      : null;
 
   return (
-    <div>
-      <h2>Заправки</h2>
-
-      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-
-      <button onClick={() => setShowCreateForm(true)}>
-        Додати заправку
-      </button>
-
-      {showCreateForm && (
-        <div
-          style={{
-            border: "1px solid #ccc",
-            padding: "12px",
-            marginTop: "12px",
-            marginBottom: "12px",
-          }}
+    <div className="fuel-page">
+      <section className="fuel-toolbar">
+        <button
+          type="button"
+          className="fuel-button fuel-button--primary"
+          onClick={() => setShowCreateModal(true)}
         >
-          <h3>Створення заправки</h3>
+          <Plus size={19} />
+          Додати заправку
+        </button>
+      </section>
 
-          <p>Водій</p>
-          <select
-            value={newDriverId}
-            onChange={(e) => {
-              setNewDriverId(e.target.value);
-              setNewVehicleId("");
-              setCreateErrorMessage("");
-            }}
-          >
-            <option value="">Оберіть водія</option>
-            {drivers.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {driver.name}
-              </option>
-            ))}
-          </select>
+      <FuelSummaryCards
+        entryCount={filteredEntries.length}
+        totalLiters={totalLiters}
+        fullTankCount={fullTankCount}
+        averageRefuel={averageRefuel}
+        averageConsumption={weightedConsumption}
+      />
 
-          <p>Автомобіль</p>
-          <select
-            value={newVehicleId}
-            onChange={(e) => {
-              setNewVehicleId(e.target.value);
-              setCreateErrorMessage("");
-            }}
-          >
-            <option value="">Оберіть автомобіль</option>
-            {vehiclesForCreate.map((vehicle) => (
-              <option key={vehicle.id} value={vehicle.id}>
-                {vehicle.brand} {vehicle.model} ({vehicle.licensePlate})
-              </option>
-            ))}
-          </select>
-
-          <p>Дата</p>
-          <input
-            type="datetime-local"
-            value={newDate}
-            onChange={(e) => {
-              setNewDate(e.target.value);
-              setCreateErrorMessage("");
-            }}
-          />
-
-          <p>Одометр</p>
-          <input
-            type="number"
-            value={newOdometerReading}
-            onChange={(e) => {
-              setNewOdometerReading(e.target.value);
-              setCreateErrorMessage("");
-            }}
-          />
-
-          <p>Літри</p>
-          <input
-            type="number"
-            step="0.01"
-            value={newLiters}
-            onChange={(e) => {
-              setNewLiters(e.target.value);
-              setCreateErrorMessage("");
-            }}
-          />
-
-          <p>
-            <label>
-              Повний бак:{" "}
-              <input
-                type="checkbox"
-                checked={newIsFullTank}
-                onChange={(e) => {
-                  setNewIsFullTank(e.target.checked);
-                  setCreateErrorMessage("");
-                }}
-              />
-            </label>
-          </p>
-
-          {createErrorMessage && (
-            <p style={{ color: "red", whiteSpace: "pre-line" }}>
-              {createErrorMessage}
-            </p>
-          )}
-
-          <button onClick={handleCreateFuelEntry}>Створити</button>
-
+      {isLoading ? (
+        <div className="fuel-page__message">Завантаження заправок...</div>
+      ) : errorMessage ? (
+        <div className="fuel-page__message fuel-page__message--error">
+          <p>{errorMessage}</p>
           <button
-            onClick={() => {
-              setShowCreateForm(false);
-              setCreateErrorMessage("");
-            }}
-            style={{ marginLeft: "8px" }}
+            type="button"
+            className="fuel-button fuel-button--secondary"
+            onClick={reloadFuelEntries}
           >
-            Скасувати
+            Спробувати ще раз
           </button>
         </div>
+      ) : (
+        <FuelTable
+          entries={pagedEntries}
+          drivers={drivers}
+          vehicles={vehicles}
+          totalCount={filteredEntries.length}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onOpenEntry={(entry) => navigate(`/admin/fuel/${entry.id}`)}
+          onPageChange={setCurrentPage}
+        />
       )}
 
-      <div style={{ marginBottom: "16px", marginTop: "16px" }}>
-        <label>
-          Фільтр за водієм:{" "}
-          <select
-            value={selectedDriverId}
-            onChange={(e) => {
-              setSelectedDriverId(e.target.value);
-              setSelectedVehicleId("all");
-            }}
-          >
-            <option value="all">Усі водії</option>
-            {drivers.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {driver.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label style={{ marginLeft: "12px" }}>
-          Фільтр за автомобілем:{" "}
-          <select
-            value={selectedVehicleId}
-            onChange={(e) => setSelectedVehicleId(e.target.value)}
-          >
-            <option value="all">Усі автомобілі</option>
-            {vehiclesForFilter.map((vehicle) => (
-              <option key={vehicle.id} value={vehicle.id}>
-                {vehicle.brand} {vehicle.model} ({vehicle.licensePlate})
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <h3>Історія заправок</h3>
-
-      {sortedFuelEntries.length === 0 ? (
-        <p>Заправки не знайдено.</p>
-      ) : (
-        sortedFuelEntries.map((entry) => (
-          <div
-            key={entry.id}
-            onClick={() => navigate(`/admin/fuel/${entry.id}`)}
-            style={{
-              border: "1px solid #ccc",
-              padding: "12px",
-              marginBottom: "8px",
-            }}
-          >
-            <p>
-              <strong>{formatDate(entry.date)}</strong>
-            </p>
-
-            <p>
-              <strong>Водій:</strong> {getDriverName(entry.driverId)}
-            </p>
-
-            <p>
-              <strong>Автомобіль:</strong> {getVehicleName(entry.vehicleId)}
-            </p>
-
-            <p>
-              <strong>Одометр:</strong> {entry.odometerReading} км
-            </p>
-
-            <p>
-              <strong>Літри:</strong> {entry.liters} л
-            </p>
-
-            <p>
-              <strong>Повний бак:</strong> {entry.isFullTank ? "Так" : "Ні"}
-            </p>
-
-            <p>
-              <strong>Пробіг від попередньої заправки:</strong>{" "}
-              {entry.distanceSinceLastRefuel ?? "не розраховано"} км
-            </p>
-
-            <p>
-              <strong>Витрата:</strong>{" "}
-              {entry.fuelConsumption
-                ? `${entry.fuelConsumption.toFixed(2)} л / 100 км`
-                : "не розраховано"}
-            </p>
-          </div>
-        ))
+      {showCreateModal && (
+        <CreateFuelModal
+          drivers={drivers}
+          vehicles={vehicles}
+          onClose={() => setShowCreateModal(false)}
+          onCreated={async () => {
+            await reloadFuelEntries();
+            setCurrentPage(1);
+          }}
+        />
       )}
     </div>
   );
