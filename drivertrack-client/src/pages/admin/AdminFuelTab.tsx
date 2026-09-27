@@ -53,8 +53,19 @@ function AdminFuelTab() {
 
   async function reloadFuelEntries() {
     try {
+      setIsLoading(true);
       setErrorMessage("");
-      setFuelEntries(await getFuelEntries());
+
+      const [loadedDrivers, loadedVehicles, loadedEntries] =
+        await Promise.all([
+          getDrivers(),
+          getVehicles(),
+          getFuelEntries(),
+        ]);
+
+      setDrivers(loadedDrivers);
+      setVehicles(loadedVehicles);
+      setFuelEntries(loadedEntries);
     } catch (error) {
       console.error("Не вдалося завантажити заправки:", error);
       setErrorMessage("Не вдалося завантажити список заправок.");

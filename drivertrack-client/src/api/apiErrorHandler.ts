@@ -1,25 +1,56 @@
-export function getApiErrorMessage(error: any): string {
-  const data = error.response?.data;
+import axios from "axios";
 
-  if (!data) {
-    return "Network error. Please try again.";
+function isRecord(
+  value: unknown
+): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value)
+  );
+}
+
+export function getApiErrorMessage(error: unknown): string {
+  const fallback = "Сталася неочікувана помилка. Спробуйте ще раз.";
+
+  if (!axios.isAxiosError<unknown>(error)) {
+    return fallback;
   }
 
-  if (data.errors || data.Errors) {
-    const errors = data.errors ?? data.Errors;
-
-    return Object.values(errors)
-      .flat()
-      .join(" ");
+  if (!error.response) {
+    return "Не вдалося з’єднатися із сервером. Спробуйте ще раз.";
   }
 
-  if (data.message || data.Message) {
-    return data.message ?? data.Message;
-  }
+  const data = error.response.data;
 
-  if (typeof data === "string") {
+  if (typeof data === "string" && data.trim()) {
     return data;
   }
 
-  return "Unexpected error. Please try again.";
+  if (!isRecord(data)) {
+    return fallback;
+  }
+
+  const errors = data.errors ?? data.Errors;
+
+  if (isRecord(errors)) {
+    const messages = Object.values(errors)
+      .flat()
+      .filter(
+        (value): value is string =>
+          typeof value === "string" && value.trim().length > 0
+      );
+
+    if (messages.length > 0) {
+      return messages.join(" ");
+    }
+  }
+
+  const message = data.message ?? data.Message;
+
+  if (typeof message === "string" && message.trim()) {
+    return message;
+  }
+
+  return fallback;
 }

@@ -1,11 +1,5 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
 import type { Driver } from "../../../api/driversApi";
 import type { Vehicle } from "../../../api/vehiclesApi";
-
 import type { PeriodMode } from "./overviewTypes";
 
 type OverviewFiltersProps = {
@@ -33,22 +27,10 @@ const periodOptions: Array<{
   value: PeriodMode;
   label: string;
 }> = [
-  {
-    value: "week",
-    label: "Поточний тиждень",
-  },
-  {
-    value: "month",
-    label: "Поточний місяць",
-  },
-  {
-    value: "all",
-    label: "Увесь час",
-  },
-  {
-    value: "custom",
-    label: "Власний період",
-  },
+  { value: "week", label: "Поточний тиждень" },
+  { value: "month", label: "Поточний місяць" },
+  { value: "all", label: "Увесь час" },
+  { value: "custom", label: "Власний період" },
 ];
 
 function OverviewFilters({
@@ -68,20 +50,6 @@ function OverviewFilters({
   onVehicleChange,
   onReset,
 }: OverviewFiltersProps) {
-  const [draftFrom, setDraftFrom] =
-    useState(from);
-
-  const [draftTo, setDraftTo] =
-    useState(to);
-
-  useEffect(() => {
-    setDraftFrom(from);
-  }, [from]);
-
-  useEffect(() => {
-    setDraftTo(to);
-  }, [to]);
-
   return (
     <section className="overview-sidebar-filters">
       <h3 className="overview-sidebar-section__title">
@@ -99,9 +67,7 @@ function OverviewFilters({
                 ? "overview-sidebar-option overview-sidebar-option--active"
                 : "overview-sidebar-option"
             }
-            onClick={() =>
-              onPeriodModeChange(option.value)
-            }
+            onClick={() => onPeriodModeChange(option.value)}
           >
             {option.label}
           </button>
@@ -114,14 +80,16 @@ function OverviewFilters({
             <span>З дати</span>
 
             <input
+              key={`from-${from}`}
               type="date"
-              value={draftFrom}
-              onChange={(event) =>
-                setDraftFrom(event.target.value)
-              }
-              onBlur={() =>
-                onFromChange(draftFrom)
-              }
+              defaultValue={from}
+              onBlur={(event) => {
+                const value = event.currentTarget.value;
+
+                if (value !== from) {
+                  onFromChange(value);
+                }
+              }}
             />
           </label>
 
@@ -129,14 +97,16 @@ function OverviewFilters({
             <span>По дату</span>
 
             <input
+              key={`to-${to}`}
               type="date"
-              value={draftTo}
-              onChange={(event) =>
-                setDraftTo(event.target.value)
-              }
-              onBlur={() =>
-                onToChange(draftTo)
-              }
+              defaultValue={to}
+              onBlur={(event) => {
+                const value = event.currentTarget.value;
+
+                if (value !== to) {
+                  onToChange(value);
+                }
+              }}
             />
           </label>
         </div>
@@ -147,19 +117,12 @@ function OverviewFilters({
           value={driverId}
           disabled={isLoading}
           aria-label="Фільтр за водієм"
-          onChange={(event) =>
-            onDriverChange(event.target.value)
-          }
+          onChange={(event) => onDriverChange(event.target.value)}
         >
-          <option value="">
-            Усі водії
-          </option>
+          <option value="">Усі водії</option>
 
           {drivers.map((driver) => (
-            <option
-              key={driver.id}
-              value={driver.id}
-            >
+            <option key={driver.id} value={driver.id}>
               {driver.name}
             </option>
           ))}
@@ -169,21 +132,13 @@ function OverviewFilters({
           value={vehicleId}
           disabled={isLoading}
           aria-label="Фільтр за автомобілем"
-          onChange={(event) =>
-            onVehicleChange(event.target.value)
-          }
+          onChange={(event) => onVehicleChange(event.target.value)}
         >
-          <option value="">
-            Усі автомобілі
-          </option>
+          <option value="">Усі автомобілі</option>
 
           {vehicles.map((vehicle) => (
-            <option
-              key={vehicle.id}
-              value={vehicle.id}
-            >
-              {vehicle.brand} {vehicle.model} —{" "}
-              {vehicle.licensePlate}
+            <option key={vehicle.id} value={vehicle.id}>
+              {vehicle.brand} {vehicle.model} — {vehicle.licensePlate}
             </option>
           ))}
         </select>

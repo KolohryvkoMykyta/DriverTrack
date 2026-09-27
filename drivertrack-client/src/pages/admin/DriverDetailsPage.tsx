@@ -1,17 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useAdminSidebar } from "../../contexts/AdminSidebarContext";
-
-import DriverDetailsFilters, {
-  type DriverDetailsTab,
-  type DriverPeriodMode,
-} from "./driver-details/DriverDetailsFilters";
-
-import "../../styles/admin-driver-details.css";
-
 import { ArrowLeft } from "lucide-react";
 
-import DriverProfileCard from "./driver-details/DriverProfileCard";
+import { useAdminSidebar } from "../../contexts/AdminSidebarContext";
 
 import {
   getDriverById,
@@ -35,13 +26,21 @@ import {
   type RouteType,
 } from "../../api/routeTypesApi";
 import { getApiErrorMessage } from "../../api/apiErrorHandler";
+
+import DriverDetailsFilters, {
+  type DriverDetailsTab,
+  type DriverPeriodMode,
+} from "./driver-details/DriverDetailsFilters";
+import DriverProfileCard from "./driver-details/DriverProfileCard";
 import DriverSummaryCards from "./driver-details/DriverSummaryCards";
 import DriverDetailsTabs from "./driver-details/DriverDetailsTabs";
 import DriverVehiclesPanel from "./driver-details/DriverVehiclesPanel";
-import EditDriverModal from "./driver-details/EditDriverModal";
-import DriverStatusModal from "./driver-details/DriverStatusModal";
 import DriverRoutesPanel from "./driver-details/DriverRoutesPanel";
 import DriverFuelPanel from "./driver-details/DriverFuelPanel";
+import EditDriverModal from "./driver-details/EditDriverModal";
+import DriverStatusModal from "./driver-details/DriverStatusModal";
+
+import "../../styles/admin-driver-details.css";
 import "../../styles/admin-driver-details-modals.css";
 import "../../styles/admin-driver-details-entries.css";
 
@@ -50,6 +49,24 @@ const FUEL_PAGE_SIZE = 5;
 
 function DriverDetailsPage() {
   const { driverId } = useParams();
+
+  if (!driverId) {
+    return <p>Ідентифікатор водія відсутній.</p>;
+  }
+
+  return (
+    <DriverDetailsContent
+      key={driverId}
+      driverId={driverId}
+    />
+  );
+}
+
+function DriverDetailsContent({
+  driverId,
+}: {
+  driverId: string;
+}) {
   const navigate = useNavigate();
 
   const [driver, setDriver] = useState<Driver | null>(null);
@@ -58,23 +75,14 @@ function DriverDetailsPage() {
   const [fuelEntries, setFuelEntries] = useState<FuelEntry[]>([]);
   const [routeTypes, setRouteTypes] = useState<RouteType[]>([]);
 
-  const [
-    detailsTab,
-    setDetailsTab,
-  ] = useState<DriverDetailsTab>(
-    "vehicles"
-  );
-
-  const [
-    periodMode,
-    setPeriodMode,
-  ] = useState<DriverPeriodMode>(
-    "month"
-  );
+  const [detailsTab, setDetailsTab] =
+    useState<DriverDetailsTab>("vehicles");
+  const [periodMode, setPeriodMode] =
+    useState<DriverPeriodMode>("month");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("all");
+  const [selectedVehicleId, setSelectedVehicleId] = useState("all");
   const [routesPage, setRoutesPage] = useState(1);
   const [fuelPage, setFuelPage] = useState(1);
 
@@ -88,18 +96,18 @@ function DriverDetailsPage() {
 
   const { setSidebarContent, clearSidebarContent } = useAdminSidebar();
 
-  async function loadDriverDetails() {
-    try {
-      setIsLoading(true);
-      setErrorMessage("");
+  useEffect(() => {
+    let isCancelled = false;
 
-      if (!driverId) {
-        setErrorMessage("Ідентифікатор водія відсутній.");
-        return;
-      }
-
-      const [driverData, vehiclesData, routesData, fuelData, routeTypesData] =
-        await Promise.all([
+    async function loadDriverDetails() {
+      try {
+        const [
+          driverData,
+          vehiclesData,
+          routesData,
+          fuelData,
+          routeTypesData,
+        ] = await Promise.all([
           getDriverById(driverId),
           getVehiclesByDriverId(driverId),
           getRouteEntriesByDriverId(driverId),
@@ -107,24 +115,36 @@ function DriverDetailsPage() {
           getRouteTypes(),
         ]);
 
-      setDriver(driverData);
-      setVehicles(vehiclesData);
-      setRouteEntries(routesData);
-      setFuelEntries(fuelData);
-      setRouteTypes(routeTypesData);
-      setSelectedVehicleId("all");
-      setRoutesPage(1);
-      setFuelPage(1);
-    } catch (error) {
-      console.error("Failed to load driver details:", error);
-      setErrorMessage("Не вдалося завантажити деталі водія.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+        if (isCancelled) return;
 
-  useEffect(() => {
-    loadDriverDetails();
+        setDriver(driverData);
+        setVehicles(vehiclesData);
+        setRouteEntries(routesData);
+        setFuelEntries(fuelData);
+        setRouteTypes(routeTypesData);
+      } catch (error) {
+        if (isCancelled) return;
+
+        console.error(
+          "Не вдалося завантажити деталі водія:",
+          error
+        );
+
+        setErrorMessage(
+          "Не вдалося завантажити деталі водія."
+        );
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadDriverDetails();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [driverId]);
 
   useEffect(() => {
@@ -163,7 +183,6 @@ function DriverDetailsPage() {
       clearSidebarContent();
     };
   }, [
-    detailsTab,
     periodMode,
     from,
     to,
@@ -174,15 +193,22 @@ function DriverDetailsPage() {
     clearSidebarContent,
   ]);
 
-  function getDateString(date: Date) {
-    return date.toISOString().split("T")[0];
+  function getDateString(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
   }
 
   function getPeriodDates(mode: DriverPeriodMode) {
     const today = new Date();
 
     if (mode === "all") {
-      return { from: undefined, to: undefined };
+      return {
+        from: undefined,
+        to: undefined,
+      };
     }
 
     if (mode === "week") {
@@ -199,7 +225,11 @@ function DriverDetailsPage() {
     }
 
     if (mode === "month") {
-      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const firstDayOfMonth = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      );
 
       return {
         from: getDateString(firstDayOfMonth),
@@ -218,8 +248,7 @@ function DriverDetailsPage() {
     const date = new Date(dateValue);
 
     if (periodDates.from) {
-      const fromDate = new Date(periodDates.from);
-      fromDate.setHours(0, 0, 0, 0);
+      const fromDate = new Date(`${periodDates.from}T00:00:00`);
 
       if (date < fromDate) {
         return false;
@@ -227,8 +256,7 @@ function DriverDetailsPage() {
     }
 
     if (periodDates.to) {
-      const toDate = new Date(periodDates.to);
-      toDate.setHours(23, 59, 59, 999);
+      const toDate = new Date(`${periodDates.to}T23:59:59.999`);
 
       if (date > toDate) {
         return false;
@@ -239,9 +267,7 @@ function DriverDetailsPage() {
   }
 
   async function handleConfirmDriverStatus() {
-    if (!driver) {
-      return;
-    }
+    if (!driver) return;
 
     try {
       setIsChangingStatus(true);
@@ -253,15 +279,12 @@ function DriverDetailsPage() {
         isActive: !driver.isActive,
       });
 
-      const updatedDriver =
-        await getDriverById(driver.id);
+      const updatedDriver = await getDriverById(driver.id);
 
       setDriver(updatedDriver);
       setIsStatusModalOpen(false);
     } catch (error) {
-      setStatusErrorMessage(
-        getApiErrorMessage(error)
-      );
+      setStatusErrorMessage(getApiErrorMessage(error));
     } finally {
       setIsChangingStatus(false);
     }
@@ -274,7 +297,7 @@ function DriverDetailsPage() {
   if (errorMessage) {
     return (
       <div>
-        <button onClick={() => navigate(-1)}>
+        <button type="button" onClick={() => navigate(-1)}>
           ← Назад
         </button>
 
@@ -286,7 +309,7 @@ function DriverDetailsPage() {
   if (!driver) {
     return (
       <div>
-        <button onClick={() => navigate(-1)}>
+        <button type="button" onClick={() => navigate(-1)}>
           ← Назад
         </button>
 
@@ -320,24 +343,31 @@ function DriverDetailsPage() {
   const filteredVehicles =
     selectedVehicleId === "all"
       ? vehicles
-      : vehicles.filter((vehicle) => vehicle.id === selectedVehicleId);
+      : vehicles.filter(
+          (vehicle) => vehicle.id === selectedVehicleId
+        );
 
   const summaryRouteCount = filteredRouteEntries.length;
+
   const summaryDistance = filteredRouteEntries.reduce(
     (sum, route) => sum + (route.totalDistance ?? 0),
     0
   );
+
   const summaryRevenue = filteredRouteEntries.reduce(
     (sum, route) => sum + route.revenue,
     0
   );
+
   const summaryDriverPayment = filteredRouteEntries.reduce(
     (sum, route) => sum + route.driverPayment,
     0
   );
 
   const routesWithFuelData = filteredRouteEntries.filter(
-    (route) => route.fuelUsed !== null && route.fuelUsed !== undefined
+    (route) =>
+      route.fuelUsed !== null &&
+      route.fuelUsed !== undefined
   );
 
   const summaryFuelUsed =
@@ -354,32 +384,35 @@ function DriverDetailsPage() {
     routesWithFuelData.length > 0 &&
     routesWithFuelData.length < filteredRouteEntries.length;
 
-const sortedRouteEntries = [...filteredRouteEntries].sort(
-  (a, b) =>
-    new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-);
+  const sortedRouteEntries = [...filteredRouteEntries].sort(
+    (a, b) =>
+      new Date(b.startDate).getTime() -
+      new Date(a.startDate).getTime()
+  );
 
-const totalRoutePages = Math.ceil(
-  sortedRouteEntries.length / ROUTES_PAGE_SIZE
-);
+  const totalRoutePages = Math.ceil(
+    sortedRouteEntries.length / ROUTES_PAGE_SIZE
+  );
 
-const pagedRouteEntries = sortedRouteEntries.slice(
-  (routesPage - 1) * ROUTES_PAGE_SIZE,
-  routesPage * ROUTES_PAGE_SIZE
-);
+  const pagedRouteEntries = sortedRouteEntries.slice(
+    (routesPage - 1) * ROUTES_PAGE_SIZE,
+    routesPage * ROUTES_PAGE_SIZE
+  );
 
-const sortedFuelEntries = [...filteredFuelEntries].sort(
-  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-);
+  const sortedFuelEntries = [...filteredFuelEntries].sort(
+    (a, b) =>
+      new Date(b.date).getTime() -
+      new Date(a.date).getTime()
+  );
 
-const totalFuelPages = Math.ceil(
-  sortedFuelEntries.length / FUEL_PAGE_SIZE
-);
+  const totalFuelPages = Math.ceil(
+    sortedFuelEntries.length / FUEL_PAGE_SIZE
+  );
 
-const pagedFuelEntries = sortedFuelEntries.slice(
-  (fuelPage - 1) * FUEL_PAGE_SIZE,
-  fuelPage * FUEL_PAGE_SIZE
-);
+  const pagedFuelEntries = sortedFuelEntries.slice(
+    (fuelPage - 1) * FUEL_PAGE_SIZE,
+    fuelPage * FUEL_PAGE_SIZE
+  );
 
   return (
     <div className="driver-details-page">
@@ -388,7 +421,6 @@ const pagedFuelEntries = sortedFuelEntries.slice(
         className="driver-details-back"
       >
         <ArrowLeft size={16} />
-
         Водії
       </Link>
 

@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 
 import type { AdminOverviewDto } from "../../../api/statisticsApi";
 
@@ -18,23 +14,28 @@ const PAGE_SIZE = 5;
 function DriversOverviewTable({
   drivers,
 }: DriversOverviewTableProps) {
-  const [currentPage, setCurrentPage] =
-    useState(1);
+  
+    const [pagination, setPagination] = useState({
+    items: drivers,
+    page: 1,
+  });
 
   const totalPages = Math.max(
     1,
     Math.ceil(drivers.length / PAGE_SIZE)
   );
 
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  const currentPage =
+    pagination.items === drivers
+      ? Math.max(1, Math.min(pagination.page, totalPages))
+      : 1;
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [drivers]);
+  function setCurrentPage(page: number) {
+    setPagination({
+      items: drivers,
+      page,
+    });
+  }
 
   const visibleDrivers = useMemo(() => {
     const startIndex =

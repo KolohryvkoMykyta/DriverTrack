@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 
 import type { AdminOverviewDto } from "../../../api/statisticsApi";
 
@@ -18,32 +14,32 @@ const PAGE_SIZE = 5;
 function VehiclesOverviewTable({
   vehicles,
 }: VehiclesOverviewTableProps) {
-  const [currentPage, setCurrentPage] =
-    useState(1);
+  const [pagination, setPagination] = useState({
+    items: vehicles,
+    page: 1,
+  });
 
   const totalPages = Math.max(
     1,
     Math.ceil(vehicles.length / PAGE_SIZE)
   );
 
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  const currentPage =
+    pagination.items === vehicles
+      ? Math.max(1, Math.min(pagination.page, totalPages))
+      : 1;
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [vehicles]);
+  function setCurrentPage(page: number) {
+    setPagination({
+      items: vehicles,
+      page,
+    });
+  }
 
   const visibleVehicles = useMemo(() => {
-    const startIndex =
-      (currentPage - 1) * PAGE_SIZE;
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
 
-    return vehicles.slice(
-      startIndex,
-      startIndex + PAGE_SIZE
-    );
+    return vehicles.slice(startIndex, startIndex + PAGE_SIZE);
   }, [vehicles, currentPage]);
 
   return (
@@ -74,46 +70,33 @@ function VehiclesOverviewTable({
               </thead>
 
               <tbody>
-                {visibleVehicles.map(
-                  (vehicle) => (
-                    <tr key={vehicle.vehicleId}>
-                      <td>
-                        <span className="overview-table__primary">
-                          {vehicle.vehicleName}
-                        </span>
-                      </td>
+                {visibleVehicles.map((vehicle) => (
+                  <tr key={vehicle.vehicleId}>
+                    <td>
+                      <span className="overview-table__primary">
+                        {vehicle.vehicleName}
+                      </span>
+                    </td>
 
-                      <td>
-                        {vehicle.licensePlate}
-                      </td>
+                    <td>{vehicle.licensePlate}</td>
 
-                      <td>
-                        {vehicle.routeCount}
-                      </td>
+                    <td>{vehicle.routeCount}</td>
 
-                      <td>
-                        {formatNumber(
-                          vehicle.totalDistance
-                        )}{" "}
-                        км
-                      </td>
+                    <td>
+                      {formatNumber(vehicle.totalDistance)} км
+                    </td>
 
-                      <td>
-                        {formatNumber(
-                          vehicle.totalFuelLiters
-                        )}{" "}
-                        л
-                      </td>
+                    <td>
+                      {formatNumber(vehicle.totalFuelLiters)} л
+                    </td>
 
-                      <td>
-                        {vehicle.averageFuelConsumption ===
-                        null
-                          ? "Немає даних"
-                          : `${vehicle.averageFuelConsumption} л / 100 км`}
-                      </td>
-                    </tr>
-                  )
-                )}
+                    <td>
+                      {vehicle.averageFuelConsumption === null
+                        ? "Немає даних"
+                        : `${vehicle.averageFuelConsumption} л / 100 км`}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
