@@ -22,4 +22,8 @@
     <ProjectReference Include="..\DriverTrack.Infrastructure\DriverTrack.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Security\" />
+  </ItemGroup>
+
 </Project>

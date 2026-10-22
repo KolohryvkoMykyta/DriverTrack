@@ -10,4 +10,6 @@ public interface IRouteRepository
     Task AddAsync(RouteEntry routeEntry, CancellationToken cancellationToken = default);
     void Update(RouteEntry routeEntry);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<List<RouteEntry>> GetCompletedByDriverAsync(Guid driverId,DateTime fromUtc,DateTime toUtc,CancellationToken cancellationToken = default);
 }

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import AdminLayout from "./layouts/AdminLayout";
+import DriverLayout from "./layouts/DriverLayout";
 
 import LoginPage from "./pages/LoginPage";
 import DriverDashboardPage from "./pages/DriverDashboardPage";
@@ -21,8 +22,14 @@ function App() {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
 
-  const isAdmin = token && role === "Admin";
-  const isDriver = token && role === "Driver";
+  const isAdmin = Boolean(token) && role === "Admin";
+  const isDriver = Boolean(token) && role === "Driver";
+
+  const homePath = isAdmin
+    ? "/admin"
+    : isDriver
+      ? "/driver"
+      : "/login";
 
   return (
     <Routes>
@@ -44,23 +51,23 @@ function App() {
         <Route path="vehicles" element={<AdminVehiclesTab />} />
         <Route path="routes" element={<AdminRoutesTab />} />
         <Route path="fuel" element={<AdminFuelTab />} />
-        <Route path="route-types" element={<AdminRouteTypesTab />} />
+        <Route
+          path="route-types"
+          element={<AdminRouteTypesTab />}
+        />
 
         <Route
           path="drivers/:driverId"
           element={<DriverDetailsPage />}
         />
-
         <Route
           path="vehicles/:vehicleId"
           element={<VehicleDetailsPage />}
         />
-
         <Route
           path="routes/:routeId"
           element={<RouteDetailsPage />}
         />
-
         <Route
           path="fuel/:fuelEntryId"
           element={<FuelDetailsPage />}
@@ -71,26 +78,18 @@ function App() {
         path="/driver"
         element={
           isDriver ? (
-            <DriverDashboardPage />
+            <DriverLayout />
           ) : (
             <Navigate to="/login" replace />
           )
         }
-      />
+      >
+        <Route index element={<DriverDashboardPage />} />
+      </Route>
 
       <Route
         path="*"
-        element={
-          token ? (
-            role === "Admin" ? (
-              <Navigate to="/admin" replace />
-            ) : (
-              <Navigate to="/driver" replace />
-            )
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={<Navigate to={homePath} replace />}
       />
     </Routes>
   );

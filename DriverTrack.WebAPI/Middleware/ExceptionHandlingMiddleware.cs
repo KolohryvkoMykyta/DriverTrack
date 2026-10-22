@@ -72,6 +72,13 @@ namespace DriverTrack.WebAPI.Middleware
                     error = new ApiErrorResponse(unauthorizedEx.Code, unauthorizedEx.Message);
                     break;
 
+                case ForbiddenException forbiddenEx:
+                    statusCode = HttpStatusCode.Forbidden;
+                    error = new ApiErrorResponse(
+                        forbiddenEx.Code,
+                        forbiddenEx.Message);
+                    break;
+
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     error = new ApiErrorResponse("internal_error", "An unexpected error occurred.");

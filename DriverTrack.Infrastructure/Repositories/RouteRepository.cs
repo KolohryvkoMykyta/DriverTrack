@@ -64,5 +64,21 @@ namespace DriverTrack.Infrastructure.Repositories
 
             _dbContext.RouteEntries.Remove(routeEntry);
         }
+
+        public Task<List<RouteEntry>> GetCompletedByDriverAsync(Guid driverId, DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default)
+        {
+            return _dbContext.RouteEntries
+                .AsNoTracking()
+                .Include(route => route.Vehicle)
+                .Include(route => route.RouteType)
+                .Where(route =>
+                    route.DriverId == driverId &&
+                    route.EndDate != null &&
+                    route.StartDate >= fromUtc &&
+                    route.StartDate < toUtc)
+                .OrderByDescending(route => route.StartDate)
+                .ThenByDescending(route => route.Id)
+                .ToListAsync(cancellationToken);
+        }
     }
 }
